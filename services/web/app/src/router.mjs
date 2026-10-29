@@ -268,6 +268,9 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
   )
 
   webRouter.get('/account-suspended', UserPagesController.accountSuspended)
+  // AEMCiCD: a suspended account has no session; without this, the global login requirement
+  // (no public access in CE) sends it back to /login and it never sees the notice.
+  AuthenticationController.addEndpointToLoginWhitelist('/account-suspended')
 
   webRouter.get(
     '/socket-diagnostics',
