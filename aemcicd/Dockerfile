@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # Imagen de LaTeX AEMCiCD: la imagen publicada de Overleaf Extended CE con los cambios de este
 # fork encima (textos, colores, logo, aviso de cuenta suspendida). Solo se recompilan el frontend
 # y las vistas, así que no hace falta construir Overleaf completo.
