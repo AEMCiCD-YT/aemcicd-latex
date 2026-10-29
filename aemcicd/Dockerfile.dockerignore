@@ -1,0 +1,8 @@
+**
+!services/web/app
+!services/web/frontend
+!services/web/locales
+!services/web/modules
+!services/web/public
+!server-ce/config/settings.js
+**/node_modules

@@ -34,20 +34,20 @@
     calc(var(--navbar-btn-padding-h) + 1px);
   --navbar-subdued-color: var(--white);
   --navbar-subdued-hover-bg: var(--white);
-  --navbar-subdued-hover-color: var(--green-50);
+  --navbar-subdued-hover-color: var(--bg-accent-01);
 
   // Properties of "primary" items
   --navbar-primary-color: var(--white);
-  --navbar-primary-border-color: var(--green-50);
-  --navbar-primary-bg: var(--green-50);
-  --navbar-primary-hover-bg: var(--green-60);
+  --navbar-primary-border-color: var(--bg-accent-01);
+  --navbar-primary-bg: var(--bg-accent-01);
+  --navbar-primary-hover-bg: var(--bg-accent-02);
   --navbar-primary-hover-border-color: var(--navbar-primary-hover-bg);
 
   // Links
   --navbar-link-color: var(--white);
   --navbar-link-border-color: var(--navbar-link-color);
   --navbar-link-hover-color: var(--white);
-  --navbar-link-hover-bg: var(--green-50);
+  --navbar-link-hover-bg: var(--bg-accent-01);
   --navbar-link-hover-border-color: var(--navbar-link-hover-bg);
 
   // Toggler
