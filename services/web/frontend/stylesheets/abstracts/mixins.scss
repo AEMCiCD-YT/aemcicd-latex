@@ -68,11 +68,11 @@
 
 @mixin editor-switcher-button {
   @include ol-button-variant(
-    $color: var(--green-60),
+    $color: var(--bg-accent-02),
     $background: var(--bg-accent-03),
-    $border: var(--green-50),
+    $border: var(--bg-accent-01),
     $hover-background: var(--bg-accent-03),
-    $hover-border: var(--green-40),
+    $hover-border: var(--bg-accent-02),
     $borderless: false
   );
 }

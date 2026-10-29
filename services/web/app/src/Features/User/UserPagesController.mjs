@@ -205,6 +205,7 @@ async function accountSuspended(req, res) {
   }
   res.render('user/accountSuspended', {
     title: 'your_account_is_suspended',
+    suspended_account_text: Settings.nav?.suspended_account_text,
   })
 }
 

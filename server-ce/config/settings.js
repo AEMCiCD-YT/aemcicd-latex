@@ -367,6 +367,13 @@ if (process.env.OVERLEAF_LOGIN_SUPPORT_TITLE != null) {
   settings.nav.login_support_title = process.env.OVERLEAF_LOGIN_SUPPORT_TITLE
 }
 
+// AEMCiCD: what a suspended account should do, shown on /account-suspended instead of the
+// generic "contact us" line. HTML allowed, like OVERLEAF_LOGIN_SUPPORT_TEXT.
+if (process.env.OVERLEAF_SUSPENDED_ACCOUNT_TEXT != null) {
+  settings.nav.suspended_account_text =
+    process.env.OVERLEAF_SUSPENDED_ACCOUNT_TEXT
+}
+
 // Sending Email
 // -------------
 //

@@ -1,7 +1,7 @@
 :root {
   --ds-nav-active-bg: var(--bg-accent-03);
-  --ds-nav-active-color: var(--green-60);
-  --theme-toggle-selected-background: var(--green-20);
+  --ds-nav-active-color: var(--bg-accent-02);
+  --theme-toggle-selected-background: var(--bg-accent-03);
   --ds-nav-content-bg-primary: var(--bg-light-primary);
   --ds-nav-content-bg-secondary: var(--bg-light-secondary);
   --table-icon-bg-hover: 27 34 44;
@@ -13,9 +13,9 @@
   --ds-nav-color-scheme: light;
 
   @include theme('default') {
-    --ds-nav-active-bg: var(--green-70);
-    --ds-nav-active-color: var(--green-10);
-    --theme-toggle-selected-background: var(--green-70);
+    --ds-nav-active-bg: var(--bg-accent-02);
+    --ds-nav-active-color: var(--bg-accent-03);
+    --theme-toggle-selected-background: var(--bg-accent-02);
     --ds-nav-content-bg-primary: var(--bg-dark-primary);
     --ds-nav-content-bg-secondary: var(--bg-dark-secondary);
     --table-icon-bg-hover: 255 255 255;
@@ -654,7 +654,7 @@ body {
     }
 
     &.active {
-      border-bottom-color: var(--green-50);
+      border-bottom-color: var(--bg-accent-01);
       color: var(--content-primary-themed);
     }
   }
