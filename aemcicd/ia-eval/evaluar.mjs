@@ -10,6 +10,10 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
 import { funcion } from '../../services/web/modules/aemcicd-ai/app/src/funciones.mjs'
 import { PRECIOS_POR_DEFECTO, costoReal } from '../../services/web/modules/aemcicd-ai/app/src/precios.mjs'
+import {
+  RUTAS_POR_DEFECTO,
+  opcionesDeEsfuerzo,
+} from '../../services/web/modules/aemcicd-ai/app/src/config.mjs'
 
 const MODELOS = {
   'gpt-6-luna': 'openai',
@@ -21,6 +25,22 @@ const MODELOS = {
 const anthropic = createAnthropic({ baseURL: 'https://api.anthropic.com/v1' })
 const openai = createOpenAI({ baseURL: 'https://api.openai.com/v1' })
 const cliente = { anthropic, openai }
+
+// Mismo esfuerzo de razonamiento que en el servidor (el primer nivel en que aparece el modelo);
+// los modelos que no están en las rutas se prueban con esfuerzo bajo.
+// Se puede forzar uno para todos: ESFUERZO=medium bash evaluar.sh
+const esfuerzoDe = {}
+for (const nivel of Object.values(RUTAS_POR_DEFECTO)) {
+  for (const r of nivel) esfuerzoDe[r.modelo] ??= r.esfuerzo
+}
+const esfuerzo = m => process.env.ESFUERZO || esfuerzoDe[m] || 'low'
+
+function opciones(modelo) {
+  const o = opcionesDeEsfuerzo({ proveedor: MODELOS[modelo], esfuerzo: esfuerzo(modelo) })
+  // Igual que el servidor: OpenAI no guarda las respuestas.
+  if (MODELOS[modelo] === 'openai') o.openai = { ...o.openai, store: false }
+  return o
+}
 const claves = { anthropic: process.env.ANTHROPIC_API_KEY, openai: process.env.OPENAI_API_KEY }
 
 const pedidos = process.argv[2]?.split(',') ?? Object.keys(MODELOS)
@@ -53,7 +73,7 @@ async function ejecutar(caso, modelo) {
       maxOutputTokens: def.maxSalida,
       maxRetries: 2,
       onError: () => {},
-      providerOptions: { openai: { store: false } },
+      providerOptions: opciones(modelo),
     })
     let texto = ''
     let primero
@@ -65,7 +85,16 @@ async function ejecutar(caso, modelo) {
     }
     const uso = await r.totalUsage
     const costo = costoReal(modelo, uso, PRECIOS_POR_DEFECTO) / 1e6
-    return { texto, costo, primero, total: Date.now() - t0, entrada: uso.inputTokens, salida: uso.outputTokens }
+    return {
+      texto,
+      costo,
+      primero,
+      total: Date.now() - t0,
+      entrada: uso.inputTokens,
+      salida: uso.outputTokens,
+      razonamiento: uso.outputTokenDetails?.reasoningTokens ?? 0,
+      fin: await r.finishReason,
+    }
   } catch (err) {
     return { error: String(err?.message || err), total: Date.now() - t0 }
   }
@@ -114,8 +143,8 @@ select{margin-top:6px}
 <h1>Evaluación de modelos · ${new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}</h1>
 <p>${casos.length} casos con la función «pregunta» y las mismas instrucciones que el servidor. Costo total: <b>$${total.toFixed(4)}</b>.
 Califica cada respuesta (¿compila?, ¿es correcta?, ¿buen español?) para decidir la asignación de la sección 5 del diseño.</p>
-<table><tr><th>Modelo</th><th>Respuestas</th><th>Costo total</th><th>Costo por consulta</th><th>Primer texto (ms)</th><th>Respuesta completa (ms)</th></tr>
-${resumen.map(r => `<tr><td>${esc(r.m)}</td><td>${r.ok}/${casos.length}</td><td>$${r.costo.toFixed(4)}</td><td>$${(r.ok ? r.costo / r.ok : 0).toFixed(5)}</td><td>${r.primero}</td><td>${r.totalMs}</td></tr>`).join('\n')}
+<table><tr><th>Modelo</th><th>Esfuerzo</th><th>Respuestas</th><th>Costo total</th><th>Costo por consulta</th><th>Primer texto (ms)</th><th>Respuesta completa (ms)</th></tr>
+${resumen.map(r => `<tr><td>${esc(r.m)}</td><td>${esc(esfuerzo(r.m))}</td><td>${r.ok}/${casos.length}</td><td>$${r.costo.toFixed(4)}</td><td>$${(r.ok ? r.costo / r.ok : 0).toFixed(5)}</td><td>${r.primero}</td><td>${r.totalMs}</td></tr>`).join('\n')}
 </table>
 <table><tr><th style="width:18%">Caso</th>${modelos.map(m => `<th>${esc(m)}</th>`).join('')}</tr>
 ${resultados
@@ -124,7 +153,7 @@ ${resultados
       .map(m => {
         const r = f.respuestas[m]
         if (r.error) return `<td class="err">Error: ${esc(r.error)}</td>`
-        return `<td><pre>${esc(r.texto)}</pre><div class="meta">$${r.costo.toFixed(5)} · ${r.entrada}→${r.salida} tokens · ${r.total} ms</div>
+        return `<td><pre>${esc(r.texto)}</pre><div class="meta">$${r.costo.toFixed(5)} · ${r.entrada}→${r.salida} tokens (${r.razonamiento} de razonamiento) · ${r.total} ms${r.fin === 'length' ? ' · <b>CORTADA por el límite</b>' : ''}</div>
 <select aria-label="Calificación"><option>—</option><option>Correcta y compila</option><option>Correcta con detalles</option><option>Incorrecta</option></select></td>`
       })
       .join('')}</tr>`
