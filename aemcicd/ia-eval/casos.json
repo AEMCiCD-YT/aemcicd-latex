@@ -452,5 +452,48 @@
     "archivos": {
       "main.tex": ""
     }
+  },
+  {
+    "id": "fase1-ampersand-tabla",
+    "tipo": "fase1",
+    "funcion": "corregir_error",
+    "entrada": {
+      "mensaje": "Extra alignment tab has been changed to \\cr",
+      "bruto": "! Extra alignment tab has been changed to \\cr.\n<template> \\endtemplate\nl.4 1 & 2 & 3 \\\\",
+      "archivo": "main.tex",
+      "linea": 4
+    },
+    "archivos": {
+      "main.tex": "\\begin{tabular}{cc}\n\\hline\nA & B \\\\\n1 & 2 & 3 \\\\\n\\hline\n\\end{tabular}"
+    }
+  },
+  {
+    "id": "fase1-ampersand-align",
+    "tipo": "fase1",
+    "funcion": "corregir_error",
+    "entrada": {
+      "mensaje": "Misplaced alignment tab character &",
+      "bruto": "! Misplaced alignment tab character &.\nl.2 a & = b",
+      "archivo": "main.tex",
+      "linea": 2
+    },
+    "archivos": {
+      "main.tex": "\\begin{equation}\na & = b + c\n\\end{equation}\nSi $x < 1$ y $y > 2$, la tabla usa & como separador."
+    }
+  },
+  {
+    "id": "fase1-menor-que-reescribir",
+    "tipo": "fase1",
+    "funcion": "reescribir",
+    "entrada": {
+      "accion": "academico",
+      "seleccion": "Cuando $x<1$ la serie converge & eso lo vimos en clase.",
+      "archivo": "main.tex",
+      "desde": 0,
+      "hasta": 55
+    },
+    "archivos": {
+      "main.tex": "Cuando $x<1$ la serie converge & eso lo vimos en clase."
+    }
   }
 ]

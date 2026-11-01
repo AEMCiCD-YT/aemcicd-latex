@@ -74,9 +74,16 @@ Los bloques de un mismo archivo se agrupan en una sola propuesta atómica.
 El servidor añade `docId`, `desde`, `hasta` y `huella` (SHA-256 del documento). El panel muestra
 «Ver diferencias» y «Aplicar / Descartar»; solo quien tiene escritura ve «Aplicar». Al aplicar,
 se comprueban de nuevo evento propio, proyecto y documento reciente en `/validar-cambio`.
-El cliente abre el archivo, espera a que se una el editor y vuelve a comprobar la huella y los
-permisos antes de despachar una operación CodeMirror. ShareJS y el historial reciben esa misma
-edición. Una edición concurrente exige repetir la consulta. El servidor nunca escribe una
+El cliente abre el archivo, espera a que se una el editor y vuelve a ubicar el texto original y
+comprobar los permisos antes de despachar una operación CodeMirror. ShareJS y el historial reciben
+esa misma edición. El texto original se ubica por contenido (`ubicar` en `cambios.mjs` y
+`aplicar.ts`): primero en la posición prevista y, si el archivo cambió en otra parte, donde
+aparezca una sola vez. Solo una edición que cambie ese texto, o lo repita, exige repetir la
+consulta. La huella se usa únicamente para inserciones puras (`antes: ""`).
+
+El contenido del proyecto llega a la IA sin entidades HTML (`&` y `<` son LaTeX); solo se
+neutralizan los cierres de nuestras etiquetas de datos. Se rechaza un `despues` con entidades HTML
+nuevas (`&amp;`…), y el JSON de la respuesta se acepta también entre cercas ```json. El servidor nunca escribe una
 propuesta en Mongo ni mediante document-updater.
 
 Después de editar, se llama al registro existente con `eventoId` y la ruta. Si falla el registro,
@@ -117,7 +124,7 @@ En el servidor, las claves vienen del Key Vault y el resto de `latex-server/pers
 | `POST /project/:id/aemcicd-ai/estimacion`        | leer el proyecto; no llama al modelo ni cobra; devuelve tokens, modelos y cota en microdólares |
 | `GET /project/:id/aemcicd-ai/instrucciones`      | leer el proyecto; informa si existe el archivo                                                 |
 | `POST /project/:id/aemcicd-ai/instrucciones`     | escribir; crea la plantilla si no existe                                                       |
-| `POST /project/:id/aemcicd-ai/validar-cambio`    | escribir; comprueba evento propio y huella reciente, sin modificar contenido                   |
+| `POST /project/:id/aemcicd-ai/validar-cambio`    | escribir; comprueba evento propio y ubica el texto en el documento actual, sin modificarlo      |
 | `GET /project/:id/aemcicd-ai/registro`           | leer el proyecto                                                                               |
 | `POST`/`DELETE /project/:id/aemcicd-ai/registro` | escribir en el proyecto                                                                        |
 

@@ -9,6 +9,7 @@ import { streamText } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
 import { prepararCaso } from './preparar-caso.mjs'
+import { validarRespuesta } from '../../services/web/modules/aemcicd-ai/app/src/cambios.mjs'
 import {
   PRECIOS_POR_DEFECTO,
   costoReal,
@@ -73,7 +74,7 @@ const resultados = []
 let total = 0
 
 async function ejecutar(caso, modelo) {
-  const { def, sistema, mensajes } = await prepararCaso(caso)
+  const { def, sistema, mensajes, contexto, sesion } = await prepararCaso(caso)
   const t0 = Date.now()
   try {
     const r = streamText({
@@ -95,7 +96,18 @@ async function ejecutar(caso, modelo) {
     }
     const uso = await r.totalUsage
     const costo = costoReal(modelo, uso, PRECIOS_POR_DEFECTO) / 1e6
+    // Para las funciones con propuesta: ¿el servidor la aceptaría y se podría aplicar?
+    let propuesta
+    if (def.propuesta) {
+      try {
+        const v = await validarRespuesta(texto, contexto, sesion, caso.funcion)
+        propuesta = { ok: true, cambios: v.cambios.length }
+      } catch (err) {
+        propuesta = { ok: false, motivo: err.message }
+      }
+    }
     return {
+      propuesta,
       texto,
       costo,
       primero,
@@ -141,6 +153,8 @@ const resumen = modelos.map(m => {
     costo: suma('costo'),
     primero: rs.length ? Math.round(suma('primero') / rs.length) : 0,
     totalMs: rs.length ? Math.round(suma('total') / rs.length) : 0,
+    conPropuesta: rs.filter(r => r.propuesta).length,
+    aplicables: rs.filter(r => r.propuesta?.ok).length,
   }
 })
 
@@ -158,8 +172,8 @@ select{margin-top:6px}
 <h1>Evaluación de modelos · ${new Date().toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}</h1>
 <p>${casos.length} casos con las funciones indicadas y las mismas instrucciones que el servidor. Costo total: <b>$${total.toFixed(4)}</b>.
 Califica cada respuesta (¿compila?, ¿es correcta?, ¿buen español?) para decidir la asignación de la sección 5 del diseño.</p>
-<table><tr><th>Modelo</th><th>Esfuerzo</th><th>Respuestas</th><th>Costo total</th><th>Costo por consulta</th><th>Primer texto (ms)</th><th>Respuesta completa (ms)</th></tr>
-${resumen.map(r => `<tr><td>${esc(r.m)}</td><td>${esc(esfuerzo(r.m))}</td><td>${r.ok}/${casos.length}</td><td>$${r.costo.toFixed(4)}</td><td>$${(r.ok ? r.costo / r.ok : 0).toFixed(5)}</td><td>${r.primero}</td><td>${r.totalMs}</td></tr>`).join('\n')}
+<table><tr><th>Modelo</th><th>Esfuerzo</th><th>Respuestas</th><th>Costo total</th><th>Costo por consulta</th><th>Primer texto (ms)</th><th>Respuesta completa (ms)</th><th>Propuestas aplicables</th></tr>
+${resumen.map(r => `<tr><td>${esc(r.m)}</td><td>${esc(esfuerzo(r.m))}</td><td>${r.ok}/${casos.length}</td><td>$${r.costo.toFixed(4)}</td><td>$${(r.ok ? r.costo / r.ok : 0).toFixed(5)}</td><td>${r.primero}</td><td>${r.totalMs}</td><td>${r.conPropuesta ? `${r.aplicables}/${r.conPropuesta}` : '—'}</td></tr>`).join('\n')}
 </table>
 <table><tr><th style="width:18%">Caso</th>${modelos.map(m => `<th>${esc(m)}</th>`).join('')}</tr>
 ${resultados
@@ -169,7 +183,7 @@ ${resultados
         .map(m => {
           const r = f.respuestas[m]
           if (r.error) return `<td class="err">Error: ${esc(r.error)}</td>`
-          return `<td><pre>${esc(r.texto)}</pre><div class="meta">$${r.costo.toFixed(5)} · ${r.entrada}→${r.salida} tokens (${r.razonamiento} de razonamiento) · ${r.total} ms${r.fin === 'length' ? ' · <b>CORTADA por el límite</b>' : ''}</div>
+          return `<td><pre>${esc(r.texto)}</pre><div class="meta">$${r.costo.toFixed(5)} · ${r.entrada}→${r.salida} tokens (${r.razonamiento} de razonamiento) · ${r.total} ms${r.fin === 'length' ? ' · <b>CORTADA por el límite</b>' : ''}${r.propuesta ? (r.propuesta.ok ? ` · <b style="color:#1b7f3b">propuesta aplicable (${r.propuesta.cambios} cambio${r.propuesta.cambios === 1 ? '' : 's'})</b>` : ` · <b style="color:#a32c26">propuesta rechazada: ${esc(r.propuesta.motivo)}</b>`) : ''}</div>
 <select aria-label="Calificación"><option>—</option><option>Correcta y compila</option><option>Correcta con detalles</option><option>Incorrecta</option></select></td>`
         })
         .join('')}</tr>`
@@ -178,6 +192,9 @@ ${resultados
 </table></body></html>`
 
 await writeFile('informe.html', html)
+for (const r of resumen)
+  if (r.conPropuesta)
+    console.log(`${r.m}: ${r.aplicables}/${r.conPropuesta} propuestas aplicables`)
 console.log(
   `\nCosto total: $${total.toFixed(4)}. Informe: ${process.cwd()}/informe.html`
 )

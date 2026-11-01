@@ -70,10 +70,56 @@ export function validarSeleccionProtegida(texto, desde, hasta) {
     )
 }
 
+// Los modelos a veces envuelven el JSON en ```json … ``` o añaden una frase antes, aunque se les
+// pida que no. Se acepta el primer objeto JSON del texto; el formato se valida igual de estricto.
+export function leerJson(texto) {
+  const limpio = String(texto)
+    .trim()
+    .replace(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/i, '$1')
+    .trim()
+  try {
+    return JSON.parse(limpio)
+  } catch {
+    const inicio = limpio.indexOf('{')
+    const fin = limpio.lastIndexOf('}')
+    if (inicio < 0 || fin <= inicio) throw new SyntaxError('sin JSON')
+    return JSON.parse(limpio.slice(inicio, fin + 1))
+  }
+}
+
+const ENTIDADES = /&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi
+
+// Una entidad HTML en «despues» que no estaba en «antes» es casi siempre un error del modelo
+// (&amp; en lugar de &) y rompería el LaTeX del estudiante.
+function entidadesNuevas(antes, despues) {
+  const previas = new Set(
+    (antes.match(ENTIDADES) || []).map(e => e.toLowerCase())
+  )
+  return (despues.match(ENTIDADES) || []).some(
+    e => !previas.has(e.toLowerCase())
+  )
+}
+
+// Ubica «antes» en el texto actual. Primero en la posición prevista; si el archivo cambió en
+// otra parte, por contenido, siempre que aparezca una sola vez. Así seguir escribiendo en otro
+// lugar (o un compañero) no invalida la propuesta. Devuelve null si no se puede ubicar.
+export function ubicar(texto, antes, desde) {
+  if (!antes) return null
+  if (
+    Number.isInteger(desde) &&
+    desde >= 0 &&
+    texto.slice(desde, desde + antes.length) === antes
+  )
+    return { desde, hasta: desde + antes.length }
+  const primera = texto.indexOf(antes)
+  if (primera < 0 || texto.indexOf(antes, primera + 1) >= 0) return null
+  return { desde: primera, hasta: primera + antes.length }
+}
+
 export async function validarRespuesta(texto, contexto, sesion, nombre) {
   let respuesta
   try {
-    respuesta = JSON.parse(texto)
+    respuesta = leerJson(texto)
   } catch {
     throw new ErrorEntrada(
       'La respuesta no tiene un formato de cambios válido. Vuelve a intentarlo.'
@@ -100,17 +146,19 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
       cambio.antes === cambio.despues
     )
       throw new ErrorEntrada('La propuesta contiene un cambio no válido.')
+    if (entidadesNuevas(cambio.antes, cambio.despues))
+      throw new ErrorEntrada(
+        'La propuesta escribió entidades HTML (como &amp;) en lugar de LaTeX. Vuelve a intentarlo.'
+      )
     rutaSegura(cambio.archivo)
     const original = contexto.documentos.find(d => d.ruta === cambio.archivo)
     if (!original)
       throw new ErrorEntrada(
         'La propuesta usa un archivo que no se envió a la IA.'
       )
+    // El archivo puede haber cambiado mientras respondía la IA (el estudiante sigue escribiendo):
+    // el cambio se ubica en el texto actual por su contenido, no por un hash del archivo entero.
     const doc = await sesion.leer(cambio.archivo)
-    if (doc.huella !== original.huella)
-      throw new ErrorEntrada(
-        'El archivo cambió mientras respondía la IA. Vuelve a consultar.'
-      )
     let desde, hasta
     if (contexto.destino) {
       const d = contexto.destino
@@ -122,19 +170,33 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
         throw new ErrorEntrada(
           'La propuesta intenta cambiar texto fuera de la selección.'
         )
-      desde = d.desde
-      hasta = d.hasta
+      if (d.seleccion) {
+        const lugar = ubicar(doc.texto, d.seleccion, d.desde)
+        if (!lugar)
+          throw new ErrorEntrada(
+            'El texto seleccionado cambió mientras respondía la IA. Vuelve a consultar.'
+          )
+        ;({ desde, hasta } = lugar)
+      } else {
+        // Inserción en el cursor: sin texto que buscar, la posición solo vale si el archivo
+        // no cambió.
+        if (doc.huella !== original.huella)
+          throw new ErrorEntrada(
+            'El archivo cambió mientras respondía la IA. Vuelve a consultar.'
+          )
+        desde = hasta = d.desde
+      }
     } else {
       if (!cambio.antes)
         throw new ErrorEntrada(
           'La propuesta no identifica el texto que hay que reemplazar.'
         )
-      desde = doc.texto.indexOf(cambio.antes)
-      if (desde < 0 || doc.texto.indexOf(cambio.antes, desde + 1) >= 0)
+      const lugar = ubicar(doc.texto, cambio.antes)
+      if (!lugar)
         throw new ErrorEntrada(
           'El texto original no existe o aparece varias veces. Vuelve a consultar.'
         )
-      hasta = desde + cambio.antes.length
+      ;({ desde, hasta } = lugar)
       if (
         contexto.fragmento &&
         !contexto.fragmento.texto.includes(cambio.antes)
@@ -205,16 +267,21 @@ export async function verificarCambio(cambio, sesion) {
   )
     throw new ErrorEntrada('El cambio no es válido.')
   const doc = await sesion.leer(rutaSegura(cambio.archivo))
-  if (
-    doc.id !== cambio.docId ||
-    doc.huella !== cambio.huella ||
-    cambio.desde < 0 ||
-    cambio.hasta < cambio.desde ||
-    cambio.hasta > doc.texto.length ||
-    doc.texto.slice(cambio.desde, cambio.hasta) !== cambio.antes
-  )
+  if (doc.id !== cambio.docId)
+    throw new ErrorEntrada('El cambio no corresponde a este archivo.')
+  // Con texto que reemplazar, se ubica por contenido (ver ubicar). Una inserción pura no tiene
+  // texto que buscar: su posición solo vale si el archivo no cambió.
+  const lugar = cambio.antes
+    ? ubicar(doc.texto, cambio.antes, cambio.desde)
+    : doc.huella === cambio.huella &&
+        cambio.desde === cambio.hasta &&
+        cambio.desde >= 0 &&
+        cambio.desde <= doc.texto.length
+      ? { desde: cambio.desde, hasta: cambio.hasta }
+      : null
+  if (!lugar)
     throw new ErrorEntrada(
-      'El archivo cambió. Vuelve a consultar antes de aplicar.'
+      'El texto que había que cambiar ya no está igual. Vuelve a consultar antes de aplicar.'
     )
-  return cambio
+  return { ...cambio, ...lugar }
 }

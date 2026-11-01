@@ -81,7 +81,13 @@ chat y propuestas JSON verificadas. El README del módulo especifica las rutas y
 completo de cambios: `{explicacion, cambios: [{archivo, antes, despues}]}`. El servidor verifica
 pertenencia, texto exacto, selección y conservación de comandos/fórmulas; añade coordenadas y una
 huella SHA-256. Los bloques de un archivo se agrupan para aplicarse juntos. Antes de aplicar,
-servidor y cliente vuelven a comprobar el documento. La escritura se hace mediante CodeMirror,
+servidor y cliente vuelven a ubicar el texto original **por su contenido**: si el estudiante o un
+compañero siguieron escribiendo en otra parte del archivo, el cambio se aplica igual; solo se
+rechaza si ese texto cambió o quedó repetido. La huella solo se usa para inserciones puras
+(`antes: ""`), que no tienen texto que buscar. El contenido del proyecto llega a la IA tal cual
+(sin entidades HTML: `&` y `<` son LaTeX); solo se neutralizan los cierres de las etiquetas de
+datos (`</documento` → `<\/documento`). Se rechaza una propuesta que introduzca entidades HTML,
+y la respuesta JSON se acepta aunque venga entre cercas ```json. La escritura se hace mediante CodeMirror,
 con la misma vía colaborativa del editor, y luego se registra la ruta aceptada. No se guardan
 prompts, imágenes ni respuestas.
 

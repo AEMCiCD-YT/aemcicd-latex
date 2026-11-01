@@ -30,5 +30,7 @@ export async function prepararCaso(caso) {
   })
   const contexto = await lector.preparar('evaluacion', nombre, entrada, 150000)
   const def = funcion(nombre)
-  return { def, ...def.preparar(entrada, contexto) }
+  // La sesión permite validar la propuesta igual que el servidor (validarRespuesta).
+  const sesion = await lector.abrir('evaluacion')
+  return { def, contexto, sesion, ...def.preparar(entrada, contexto) }
 }
