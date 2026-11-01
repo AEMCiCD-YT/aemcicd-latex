@@ -1,6 +1,6 @@
 # Imagen de LaTeX AEMCiCD: la imagen publicada de Overleaf Extended CE con los cambios de este
-# fork encima (textos, colores, logo, aviso de cuenta suspendida). Solo se recompilan el frontend
-# y las vistas, así que no hace falta construir Overleaf completo.
+# fork encima (textos, colores, logo, aviso de cuenta suspendida, asistente de IA). Solo se
+# recompilan el frontend y las vistas, así que no hace falta construir Overleaf completo.
 #   docker build -f aemcicd/Dockerfile -t latex-aemcicd .
 # Al actualizar Extended CE: unir la etiqueta nueva de yu-i-i/overleaf-cep en este fork, cambiar
 # BASE a la misma versión, ejecutar aemcicd/merge-locales.py y construir (aemcicd/README.md).
@@ -10,6 +10,8 @@ ARG BASE=overleafcep/sharelatex:6.3.0-ext-v5.1
 # En una etapa aparte: instalar las dependencias de desarrollo cambia las de producción, y la
 # imagen no trae compilador para los módulos nativos (no se recompilan: --mode=skip-build).
 FROM ${BASE} AS frontend
+# La configuración dice a webpack qué componentes de módulos incluir (overleafModuleImports).
+COPY services/web/config /overleaf/services/web/config
 COPY services/web/frontend /overleaf/services/web/frontend
 COPY services/web/locales /overleaf/services/web/locales
 COPY services/web/modules /overleaf/services/web/modules
@@ -21,7 +23,13 @@ RUN cd /overleaf/services/web \
 
 # ---------- Imagen final ----------
 FROM ${BASE}
+# Dependencias de producción: el fork añade @ai-sdk/anthropic a services/web. Sin scripts de
+# instalación, porque la imagen no trae compilador y los módulos nativos ya vienen compilados.
+COPY yarn.lock /overleaf/yarn.lock
+COPY services/web/package.json /overleaf/services/web/package.json
+RUN cd /overleaf && YARN_ENABLE_SCRIPTS=false yarn workspaces focus --all --production
 COPY services/web/app /overleaf/services/web/app
+COPY services/web/config /overleaf/services/web/config
 COPY services/web/locales /overleaf/services/web/locales
 COPY services/web/modules /overleaf/services/web/modules
 COPY --from=frontend /overleaf/services/web/public /overleaf/services/web/public
