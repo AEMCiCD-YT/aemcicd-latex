@@ -15,7 +15,7 @@
 
 .aemcicd-ai-mensaje,
 .aemcicd-ai-vacio {
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
   text-align: center;
   margin: auto 0;
 }
@@ -38,7 +38,7 @@
 
 .aemcicd-ai-nota {
   font-size: var(--font-size-02);
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
 }
 
 .aemcicd-ai-saldo {
@@ -50,7 +50,7 @@
   margin: var(--spacing-02) 0;
   overflow: hidden;
   border-radius: 3px;
-  background: var(--bg-light-tertiary);
+  background: var(--bg-tertiary-themed);
 
   div {
     height: 100%;
@@ -60,7 +60,7 @@
 }
 
 .aemcicd-ai-saldo-renueva {
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
 }
 
 .aemcicd-ai-turnos {
@@ -78,7 +78,8 @@
   margin-left: auto;
   padding: var(--spacing-03) var(--spacing-04);
   border-radius: var(--border-radius-base);
-  background: var(--bg-light-secondary);
+  background: var(--bg-secondary-themed);
+  color: var(--content-primary-themed);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -86,17 +87,12 @@
 .aemcicd-ai-etiqueta {
   display: block;
   font-size: var(--font-size-01);
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
 }
 
 .aemcicd-ai-respuesta {
   margin-top: var(--spacing-03);
   word-break: break-word;
-}
-
-.aemcicd-ai-texto {
-  white-space: pre-wrap;
-  margin-bottom: var(--spacing-03);
 }
 
 .aemcicd-ai-codigo {
@@ -107,8 +103,10 @@
     margin: 0;
     padding: var(--spacing-03);
     padding-right: var(--spacing-09);
+    border: 1px solid var(--border-primary-themed);
     border-radius: var(--border-radius-base);
-    background: var(--bg-light-secondary);
+    background: var(--bg-secondary-themed);
+    color: var(--content-primary-themed);
     font-size: var(--font-size-02);
     white-space: pre-wrap;
   }
@@ -121,7 +119,7 @@
 }
 
 .aemcicd-ai-pensando {
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
 }
 
 .aemcicd-ai-error {
@@ -137,11 +135,24 @@
 .aemcicd-ai-modelo {
   flex: 1;
   font-size: var(--font-size-01);
-  color: var(--content-secondary);
+  color: var(--content-secondary-themed);
 }
 
-.aemcicd-ai-pie .activo {
-  color: var(--content-primary-themed, var(--bg-accent-01));
+// Voto marcado: fondo de acento, visible en tema claro y oscuro.
+.aemcicd-ai-pie .activo,
+.aemcicd-ai-pie .activo:hover {
+  background: var(--bg-accent-01);
+  color: var(--white, #fff);
+}
+
+.aemcicd-ai-voto {
+  margin-top: var(--spacing-02);
+  font-size: var(--font-size-01);
+  color: var(--content-secondary-themed);
+
+  &.error {
+    color: var(--content-danger);
+  }
 }
 
 .aemcicd-ai-formulario {
@@ -155,5 +166,49 @@
 
   button {
     align-self: flex-end;
+  }
+}
+
+.aemcicd-ai-markdown {
+  color: var(--content-primary-themed);
+
+  p,
+  ul,
+  ol,
+  blockquote {
+    margin-bottom: var(--spacing-03);
+  }
+
+  ul,
+  ol {
+    padding-left: var(--spacing-06);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: var(--spacing-04) 0 var(--spacing-02);
+    font-size: var(--font-size-03);
+    font-weight: 600;
+  }
+
+  code {
+    padding: 0 var(--spacing-01);
+    border-radius: 3px;
+    background: var(--bg-secondary-themed);
+    color: var(--content-primary-themed);
+    font-size: 0.9em;
+  }
+
+  blockquote {
+    padding-left: var(--spacing-04);
+    border-left: 3px solid var(--border-primary-themed);
+  }
+
+  a {
+    color: var(--link-ui-themed, var(--link-ui));
   }
 }

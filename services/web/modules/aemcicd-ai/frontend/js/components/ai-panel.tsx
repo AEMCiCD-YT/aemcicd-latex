@@ -26,8 +26,13 @@ export type Turno = {
   costo?: number
   error?: string
   valoracion?: 1 | -1 | null
+  // Confirmación visible del 👍/👎 (se borra a los pocos segundos).
+  voto?: 'guardado' | 'quitado' | 'error'
   alternativa?: boolean
 }
+
+// El saldo se muestra truncado: con $0,995 disponibles se lee $0,99, no $1,00.
+const centavosAbajo = (n: number) => Math.floor(n * 100 + 1e-9) / 100
 
 const dinero = (n: number) =>
   new Intl.NumberFormat('es-EC', {
@@ -46,7 +51,7 @@ function BarraSaldo({ saldo }: { saldo: Saldo }) {
   return (
     <div className="aemcicd-ai-saldo">
       <div className="aemcicd-ai-saldo-texto">
-        Te quedan <strong>{dinero(saldo.disponible)}</strong> de{' '}
+        Te quedan <strong>{dinero(centavosAbajo(saldo.disponible))}</strong> de{' '}
         {dinero(saldo.credito)} este mes
       </div>
       <div
@@ -213,12 +218,16 @@ function AiPanel() {
   const alValorar = async (t: Turno, valor: 1 | -1) => {
     if (!t.eventoId) return
     const nuevo = t.valoracion === valor ? null : valor
-    actualizar(t.id, () => ({ valoracion: nuevo }))
+    actualizar(t.id, () => ({ valoracion: nuevo, voto: undefined }))
     try {
       await valorar(t.eventoId, nuevo)
+      actualizar(t.id, () => ({
+        voto: nuevo === null ? 'quitado' : 'guardado',
+      }))
     } catch {
-      actualizar(t.id, () => ({ valoracion: t.valoracion }))
+      actualizar(t.id, () => ({ valoracion: t.valoracion, voto: 'error' }))
     }
+    setTimeout(() => actualizar(t.id, () => ({ voto: undefined })), 4000)
   }
 
   let contenido

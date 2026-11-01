@@ -1,11 +1,12 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import MaterialIcon from '@/shared/components/material-icon'
 import OLIconButton from '@/shared/components/ol/ol-icon-button'
 import OLTooltip from '@/shared/components/ol/ol-tooltip'
+import Markdown from './markdown'
 import type { Turno } from './ai-panel'
 
-// Muestra el texto con los bloques ```…``` como código, sin interpretar HTML.
-function Texto({ texto }: { texto: string }) {
+// Los bloques ```…``` van aparte, con botón de copiar; el resto se muestra como Markdown.
+function Texto({ texto, terminado }: { texto: string; terminado: boolean }) {
   const partes = texto.split(/```[a-zA-Z]*\n?/)
   return (
     <>
@@ -13,9 +14,7 @@ function Texto({ texto }: { texto: string }) {
         i % 2 === 1 ? (
           <BloqueCodigo key={i} codigo={p.replace(/\n$/, '')} />
         ) : (
-          <Fragment key={i}>
-            {p && <p className="aemcicd-ai-texto">{p.trim()}</p>}
-          </Fragment>
+          p.trim() && <Markdown key={i} texto={p} formulas={terminado} />
         )
       )}
     </>
@@ -83,7 +82,12 @@ export default function Respuesta({
         {turno.pregunta}
       </div>
       <div className="aemcicd-ai-respuesta" aria-live="polite">
-        {turno.texto && <Texto texto={turno.texto} />}
+        {turno.texto && (
+          <Texto
+            texto={turno.texto}
+            terminado={turno.estado !== 'escribiendo'}
+          />
+        )}
         {turno.estado === 'escribiendo' && !turno.texto && (
           <span className="aemcicd-ai-pensando">Pensando…</span>
         )}
@@ -104,6 +108,7 @@ export default function Respuesta({
             variant="ghost"
             icon="thumb_up"
             className={turno.valoracion === 1 ? 'activo' : undefined}
+            aria-pressed={turno.valoracion === 1}
             accessibilityLabel="Útil"
             onClick={() => alValorar(1)}
           />
@@ -112,6 +117,7 @@ export default function Respuesta({
             variant="ghost"
             icon="thumb_down"
             className={turno.valoracion === -1 ? 'activo' : undefined}
+            aria-pressed={turno.valoracion === -1}
             accessibilityLabel="No útil"
             onClick={() => alValorar(-1)}
           />
@@ -129,6 +135,17 @@ export default function Respuesta({
               onClick={alProbarOtro}
             />
           </OLTooltip>
+        </div>
+      )}
+      {turno.voto && (
+        <div
+          className={`aemcicd-ai-voto ${turno.voto === 'error' ? 'error' : ''}`}
+          role="status"
+        >
+          {turno.voto === 'guardado' && 'Gracias, tu opinión quedó registrada.'}
+          {turno.voto === 'quitado' && 'Opinión retirada.'}
+          {turno.voto === 'error' &&
+            'No se pudo registrar. Inténtalo de nuevo.'}
         </div>
       )}
     </div>
