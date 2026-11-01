@@ -8,14 +8,15 @@ El código modificado se publica aquí, como pide la AGPL, y el pie de página d
 
 ## Qué cambia
 
-| Cambio | Archivos |
-|---|---|
-| Traducción completa al español (2 635 textos que Overleaf no tenía) | `aemcicd/locales/es.json`, fusionado en `services/web/locales/es.json` |
-| Colores de la asociación: acento rojo oscuro (contraste 5:1 con blanco) y enlaces en el azul de la marca | `frontend/stylesheets/foundations/colors.scss`, `components/nav.scss`, `components/tabs.scss`, `components/radio-chip.scss`, `abstracts/mixins.scss` |
-| Logo y favicons de la AEMCiCD | `services/web/public/img/aemcicd/`, `services/web/public/favicon*`, `apple-touch-icon.png` |
-| Aviso para cuentas suspendidas, configurable (`OVERLEAF_SUSPENDED_ACCOUNT_TEXT`) | `server-ce/config/settings.js`, `UserPagesController.mjs`, `views/user/accountSuspended.pug` |
-| Asistente de IA (módulo `aemcicd-ai`), con la dependencia `@ai-sdk/anthropic` y la variable `aemcicdAiEnabled` | `services/web/modules/aemcicd-ai/`, `config/settings.defaults.js`, `ExpressLocals.mjs`, `types/exposed-settings.ts`, `package.json`, `yarn.lock` |
-| El envío de correo ya no escribe la configuración SMTP (con la contraseña) en el log | `app/src/Features/Email/EmailSender.mjs` |
+| Cambio                                                                                                                                                                                                       | Archivos                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Traducción completa al español (2 635 textos que Overleaf no tenía)                                                                                                                                          | `aemcicd/locales/es.json`, fusionado en `services/web/locales/es.json`                                                                               |
+| Colores de la asociación: acento rojo oscuro (contraste 5:1 con blanco) y enlaces en el azul de la marca                                                                                                     | `frontend/stylesheets/foundations/colors.scss`, `components/nav.scss`, `components/tabs.scss`, `components/radio-chip.scss`, `abstracts/mixins.scss` |
+| Logo y favicons de la AEMCiCD                                                                                                                                                                                | `services/web/public/img/aemcicd/`, `services/web/public/favicon*`, `apple-touch-icon.png`                                                           |
+| Aviso para cuentas suspendidas, configurable (`OVERLEAF_SUSPENDED_ACCOUNT_TEXT`)                                                                                                                             | `server-ce/config/settings.js`, `UserPagesController.mjs`, `views/user/accountSuspended.pug`                                                         |
+| Asistente de IA (módulo `aemcicd-ai`), con la dependencia `@ai-sdk/anthropic` y la variable `aemcicdAiEnabled`                                                                                               | `services/web/modules/aemcicd-ai/`, `config/settings.defaults.js`, `ExpressLocals.mjs`, `types/exposed-settings.ts`, `package.json`, `yarn.lock`     |
+| Fase 1 de IA: registrar el botón en Logs, las acciones de selección y su contexto compartido mediante las extensiones existentes; es el único archivo de Overleaf modificado fuera del módulo para esta fase | `services/web/config/settings.defaults.js` (`pdfLogEntryHeaderActionComponents`, `editorFloatingMenuActions`, `rootContextProviders`)                |
+| El envío de correo ya no escribe la configuración SMTP (con la contraseña) en el log                                                                                                                         | `app/src/Features/Email/EmailSender.mjs`                                                                                                             |
 
 Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se configuran en
 `latex-server/personalizacion/variables.env`, no aquí.
@@ -23,7 +24,8 @@ Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se
 ## Asistente de IA
 
 Módulo propio `services/web/modules/aemcicd-ai` (fase base: crédito, dos proveedores, medición y
-panel en el editor). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
+panel en el editor; fase 1 implementada para revisión: diagnósticos, escritura, visión, contexto
+del proyecto, instrucciones y propuestas aplicables). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
 diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
 [`ia-eval/`](ia-eval/README.md).
 

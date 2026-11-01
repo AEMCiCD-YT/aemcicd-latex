@@ -1,6 +1,6 @@
 # IA en LaTeX AEMCiCD: documento de diseño
 
-**Estado:** propuesta para revisión de la directiva. Todavía no hay código.
+**Estado:** fase base en producción; fase 1 implementada en la rama `ia-fase-1`, pendiente de revisión y despliegue. Las fases 2 y 3 siguen siendo planificación.
 **Fecha:** 1 de noviembre de 2026.
 **Alcance:** servidor `latex.aemcicd.org` (este fork de Overleaf Extended CE) y la plataforma
 `plataforma.aemcicd.org` (panel del Programa LaTeX).
@@ -18,15 +18,15 @@ antes de esa fecha para recibir a quienes se queden sin herramienta.
 
 ## 2. Decisiones ya tomadas
 
-| Tema | Decisión |
-|---|---|
-| Proveedores | **Dos fuentes de crédito** (sección 6): API de Claude (Anthropic), ~$500 al mes, con el cupo «API de Claude» del Programa IA cerrado para reservarlos; y API de OpenAI, **$380 por ciclo** (del 6 de cada mes al 6 del siguiente; $62 prorrateados hasta el 6 de noviembre). |
-| Modelos | Mezcla aproximada **80 % modelos rápidos / 20 % modelos avanzados**, elegida por función (sección 5). Rápidos: Claude Haiku 5.5 y GPT-6 Luna. Avanzados: Claude Sonnet 5.5, GPT-6.1 Terra y GPT-6.1 Sol. No se usan Opus ni GPT-6 Astra. |
-| Crédito | **$1 de IA por estudiante al mes**, medido por **costo real** (no por número de consultas), con **barra de saldo** visible. Se reinicia el día 1 de cada mes y no se acumula. |
-| Precio del programa | Sin cambios: $2/mes o $10/semestre. |
-| Uso opcional | La IA se activa por estudiante, tras leer un aviso corto. Quien no la activa no envía nada a Anthropic. |
-| Datos | Solo análisis interno de uso, sin contenido. **No se venden ni se entregan a nadie**, tampoco a la universidad (sección 9). |
-| Soporte | Asistente de soporte en la plataforma y en el editor; **no** en WhatsApp. |
+| Tema                | Decisión                                                                                                                                                                                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Proveedores         | **Dos fuentes de crédito** (sección 6): API de Claude (Anthropic), ~$500 al mes, con el cupo «API de Claude» del Programa IA cerrado para reservarlos; y API de OpenAI, **$380 por ciclo** (del 6 de cada mes al 6 del siguiente; $62 prorrateados hasta el 6 de noviembre). |
+| Modelos             | Mezcla aproximada **80 % modelos rápidos / 20 % modelos avanzados**, elegida por función (sección 5). Rápidos: Claude Haiku 5.5 y GPT-6 Luna. Avanzados: Claude Sonnet 5.5, GPT-6.1 Terra y GPT-6.1 Sol. No se usan Opus ni GPT-6 Astra.                                     |
+| Crédito             | **$1 de IA por estudiante al mes**, medido por **costo real** (no por número de consultas), con **barra de saldo** visible. Se reinicia el día 1 de cada mes y no se acumula.                                                                                                |
+| Precio del programa | Sin cambios: $2/mes o $10/semestre.                                                                                                                                                                                                                                          |
+| Uso opcional        | La IA se activa por estudiante, tras leer un aviso corto. Quien no la activa no envía nada a Anthropic.                                                                                                                                                                      |
+| Datos               | Solo análisis interno de uso, sin contenido. **No se venden ni se entregan a nadie**, tampoco a la universidad (sección 9).                                                                                                                                                  |
+| Soporte             | Asistente de soporte en la plataforma y en el editor; **no** en WhatsApp.                                                                                                                                                                                                    |
 
 ## 3. Funciones y fases
 
@@ -36,12 +36,12 @@ de soporte y la medición del piloto.
 
 ### Resumen
 
-| Fase | Cuándo | Áreas |
-|---|---|---|
-| **Base** | Primera semana de trabajo | 9 (registro de uso), 12 (medición del piloto) y la infraestructura común |
-| **Fase 1: piloto** | Mediados de noviembre | 1 (ayuda con LaTeX), 2 (escritura, sin cambios con seguimiento), 11 (instrucciones del proyecto) |
-| **Fase 2: antes del 1 de enero** | Diciembre | 2 (cambios con seguimiento), 3 (revisión académica), 7 (importar desde Prism y Word), 9 (declaración de uso), 12 (asistente de soporte), gráficas estilo Origin |
-| **Fase 3: próximo semestre** | Enero y febrero | 4 (investigación), 5 (aprendizaje), 6 (trabajo en equipo), 7 (Beamer, pósteres, exportar a Word), 8 (coherencia de notación, de código a algoritmo) |
+| Fase                             | Cuándo                    | Áreas                                                                                                                                                           |
+| -------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Base**                         | Primera semana de trabajo | 9 (registro de uso), 12 (medición del piloto) y la infraestructura común                                                                                        |
+| **Fase 1: piloto**               | Mediados de noviembre     | 1 (ayuda con LaTeX), 2 (escritura, sin cambios con seguimiento), 11 (instrucciones del proyecto)                                                                |
+| **Fase 2: antes del 1 de enero** | Diciembre                 | 2 (cambios con seguimiento), 3 (revisión académica), 7 (importar desde Prism y Word), 9 (declaración de uso), 12 (asistente de soporte), gráficas estilo Origin |
+| **Fase 3: próximo semestre**     | Enero y febrero           | 4 (investigación), 5 (aprendizaje), 6 (trabajo en equipo), 7 (Beamer, pósteres, exportar a Word), 8 (coherencia de notación, de código a algoritmo)             |
 
 ### Base (primero, debajo de todo)
 
@@ -53,9 +53,10 @@ de soporte y la medición del piloto.
 - **👍/👎** en cada respuesta y eventos de medición sin contenido (área 12).
 - Interruptor para apagar la IA en todo el servidor sin reinstalar.
 
-### Fase 1: piloto (mediados de noviembre)
+### Fase 1: piloto (mediados de noviembre; implementada para revisión)
 
 **Área 1, ayuda con LaTeX**
+
 - **Corregir errores con un clic:** botón en cada error del log que lo explica en español y
   propone el arreglo.
 - **Advertencias:** lo mismo para avisos como `Overfull \hbox` o paquetes en conflicto.
@@ -64,6 +65,7 @@ de soporte y la medición del piloto.
 - **Tablas desde Excel:** se pegan los datos y sale la tabla con `booktabs`.
 
 **Área 2, escritura**
+
 - **Chat con el proyecto:** conoce todos los archivos, no solo el abierto.
 - **Reescribir la selección:** mejorar la redacción, dar tono académico, resumir, ampliar,
   traducir entre español e inglés.
@@ -73,6 +75,26 @@ de soporte y la medición del piloto.
 
 En la fase 1 las propuestas se muestran como **diferencias** en el panel, con «Aplicar» y
 «Descartar».
+
+Implementación: catálogo `FUNCIONES`, lector del proyecto en el servidor, estimación previa del
+chat y propuestas JSON verificadas. El README del módulo especifica las rutas y el contrato
+completo de cambios: `{explicacion, cambios: [{archivo, antes, despues}]}`. El servidor verifica
+pertenencia, texto exacto, selección y conservación de comandos/fórmulas; añade coordenadas y una
+huella SHA-256. Los bloques de un archivo se agrupan para aplicarse juntos. Antes de aplicar,
+servidor y cliente vuelven a comprobar el documento. La escritura se hace mediante CodeMirror,
+con la misma vía colaborativa del editor, y luego se registra la ruta aceptada. No se guardan
+prompts, imágenes ni respuestas.
+
+El selector rasteriza en el navegador las imágenes y los PDF de una página a PNG de hasta
+1600 px; el servidor valida la firma, dimensiones y máximo de 5 MiB del resultado. No se envía
+el PDF original. Los proyectos completos tienen un límite configurable de 150 000 tokens
+estimados; si se excede, no se envía un contexto parcial. La estimación incluye la alternativa
+y se vuelve a comprobar al confirmar; un costo mayor requiere una nueva confirmación.
+
+La verificación local cubre Mongo temporal, peticiones HTTP simuladas a los proveedores y un
+banco de interfaz con componentes reales y CodeMirror. Sigue pendiente la integración en una
+instancia completa de Overleaf con Mongo/Redis/ShareJS y la prueba con las API reales. Las
+capturas y comandos reproducibles se documentan en `services/web/modules/aemcicd-ai/test/interfaz/`.
 
 ### Fase 2: antes del 1 de enero (diciembre)
 
@@ -132,19 +154,20 @@ API de Claude (Anthropic)  ·  API de OpenAI
   - `frontend/js/`: panel lateral de IA, botón en los errores del log, barra de saldo, diálogos.
   - `test/`: pruebas unitarias con proveedores simulados (sin gastar créditos).
 - Rutas (todas requieren sesión; las de proyecto, permiso de lectura o escritura según la acción):
-  - `POST /project/:id/ai/:funcion` (respuesta en streaming).
-  - `GET /ai/saldo`.
-  - `POST /ai/activar`.
-  - `POST /ai/eventos/:id/valoracion` (👍/👎).
-  - `GET|DELETE /project/:id/ai/registro`.
+  - `POST /project/:id/aemcicd-ai/consulta` y `/foto` (NDJSON).
+  - `GET /aemcicd-ai/estado` (incluye saldo) y `POST /aemcicd-ai/activar`.
+  - `POST /aemcicd-ai/eventos/:id/valoracion` (👍/👎).
+  - `GET|POST|DELETE /project/:id/aemcicd-ai/registro`.
+  - `POST /project/:id/aemcicd-ai/estimacion` y `/validar-cambio`.
+  - `GET|POST /project/:id/aemcicd-ai/instrucciones`.
 - Textos de la interfaz en `aemcicd/locales/es.json`, como el resto de la traducción.
 
 ### Proveedores
 
 Una interfaz común (`responder(peticion) → flujo de texto + uso`) con dos implementaciones:
 
-- **Claude:** SDK oficial `@anthropic-ai/sdk`, con streaming y **caché de prompts** explícita.
-- **OpenAI:** SDK oficial `openai` (API Responses), con streaming; la caché de entrada es
+- **Claude:** AI SDK con `@ai-sdk/anthropic`, streaming y **caché de prompts** explícita.
+- **OpenAI:** AI SDK con `@ai-sdk/openai` (API Responses), con streaming; la caché de entrada es
   automática.
 
 En ambos:
@@ -159,15 +182,15 @@ En ambos:
 
 ### Configuración (variables del contenedor)
 
-| Variable | Uso | Valor inicial |
-|---|---|---|
-| `AEMCICD_AI_ENABLED` | Interruptor general | `true` |
-| `ANTHROPIC_API_KEY` | Clave del API de Claude, solo para LaTeX | Key Vault |
-| `OPENAI_API_KEY` | Clave del API de OpenAI, solo para LaTeX | Key Vault |
-| `AEMCICD_AI_MONTHLY_CREDIT_USD` | Crédito por estudiante | `1` |
-| `AEMCICD_AI_BUDGET_CLAUDE_USD` | Tope mensual del servidor con Claude (ciclo del día 1) | `450` |
-| `AEMCICD_AI_BUDGET_OPENAI_USD` | Tope del servidor con OpenAI (ciclo del día 6) | `340` |
-| `AEMCICD_AI_ROUTES` | Proveedor y modelo de cada función (sección 5) | archivo JSON en la imagen |
+| Variable                        | Uso                                                    | Valor inicial             |
+| ------------------------------- | ------------------------------------------------------ | ------------------------- |
+| `AEMCICD_AI_ENABLED`            | Interruptor general                                    | `true`                    |
+| `ANTHROPIC_API_KEY`             | Clave del API de Claude, solo para LaTeX               | Key Vault                 |
+| `OPENAI_API_KEY`                | Clave del API de OpenAI, solo para LaTeX               | Key Vault                 |
+| `AEMCICD_AI_MONTHLY_CREDIT_USD` | Crédito por estudiante                                 | `1`                       |
+| `AEMCICD_AI_BUDGET_CLAUDE_USD`  | Tope mensual del servidor con Claude (ciclo del día 1) | `450`                     |
+| `AEMCICD_AI_BUDGET_OPENAI_USD`  | Tope del servidor con OpenAI (ciclo del día 6)         | `340`                     |
+| `AEMCICD_AI_ROUTES`             | Proveedor y modelo de cada función (sección 5)         | archivo JSON en la imagen |
 
 ### Las claves de los API
 
@@ -192,24 +215,24 @@ En ambos:
 
 ### Asignación (tras la evaluación del 1 de noviembre de 2026)
 
-| Nivel | Funciones | Modelo principal | Alternativa |
-|---|---|---|---|
-| **Rápido** | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, de código a algoritmo, resumen del historial | GPT-6.1 Terra, esfuerzo bajo | Claude Haiku 5.5, esfuerzo bajo |
-| **Avanzado, proyecto completo** | Chat con el proyecto, revisor tipo jurado, coherencia de notación, Beamer y pósteres, importaciones | GPT-6.1 Terra, esfuerzo medio | Claude Sonnet 5.5, esfuerzo medio |
-| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin | Claude Sonnet 5.5, esfuerzo medio | GPT-6.1 Sol, esfuerzo medio |
+| Nivel                            | Funciones                                                                                                                           | Modelo principal                  | Alternativa                       |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------- |
+| **Rápido**                       | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, de código a algoritmo, resumen del historial | GPT-6.1 Terra, esfuerzo bajo      | Claude Haiku 5.5, esfuerzo bajo   |
+| **Avanzado, proyecto completo**  | Chat con el proyecto, revisor tipo jurado, coherencia de notación, Beamer y pósteres, importaciones                                 | GPT-6.1 Terra, esfuerzo medio     | Claude Sonnet 5.5, esfuerzo medio |
+| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin                                                              | Claude Sonnet 5.5, esfuerzo medio | GPT-6.1 Sol, esfuerzo medio       |
 
 El **esfuerzo** es cuánto razona el modelo antes de responder. Ese razonamiento no se ve, pero se
 cobra como salida: Claude Haiku 5.5 y Sonnet 5.5 razonan por defecto (medio y alto).
 
 Resultado de la evaluación (20 casos, misma instrucción que el servidor, esfuerzo por defecto):
 
-| Modelo | Costo por consulta | Errores encontrados al revisar |
-|---|---|---|
-| GPT-6 Luna | $0,0002 | Una corrección que vuelve a fallar (`\textbf` con un párrafo dentro) y un ajuste de Overleaf que no existe |
-| Claude Haiku 5.5 | $0,0004 | Afirma que `amssymb` carga `amsmath` (falso); el diagrama TikZ se cortó por el límite de salida |
-| GPT-6.1 Terra | $0,0016 | Ninguno |
-| Claude Sonnet 5.5 | $0,0081 | Ninguno; respuestas más completas, pero cinco veces más caras que Terra y un diagrama cortado |
-| GPT-6.1 Sol | $0,0028 | Sistema de ecuaciones con `cases` y `&=`, que no alinea como dice |
+| Modelo            | Costo por consulta | Errores encontrados al revisar                                                                             |
+| ----------------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| GPT-6 Luna        | $0,0002            | Una corrección que vuelve a fallar (`\textbf` con un párrafo dentro) y un ajuste de Overleaf que no existe |
+| Claude Haiku 5.5  | $0,0004            | Afirma que `amssymb` carga `amsmath` (falso); el diagrama TikZ se cortó por el límite de salida            |
+| GPT-6.1 Terra     | $0,0016            | Ninguno                                                                                                    |
+| Claude Sonnet 5.5 | $0,0081            | Ninguno; respuestas más completas, pero cinco veces más caras que Terra y un diagrama cortado              |
+| GPT-6.1 Sol       | $0,0028            | Sistema de ecuaciones con `cases` y `&=`, que no alinea como dice                                          |
 
 Segunda ronda con el esfuerzo ajustado (Terra y Haiku bajo, Sonnet y Sol medio): ninguna
 respuesta cortada, Terra bajó a $0,0011 por consulta y responde en 1 segundo en lugar de 2,4.
@@ -247,13 +270,13 @@ nivel.
 
 ### Precios de referencia (por millón de tokens)
 
-| Modelo | Entrada | Entrada en caché | Salida |
-|---|---|---|---|
-| Claude Haiku 5.5 | $0,10 | $0,01 | $0,50 |
-| GPT-6 Luna | $0,10 | $0,01 | $0,50 |
-| GPT-6.1 Terra | $1,00 | $0,05 | $5,00 |
-| GPT-6.1 Sol | $2,00 | $0,10 | $10,00 |
-| Claude Sonnet 5.5 | $2,00 | $0,20 | $10,00 |
+| Modelo            | Entrada | Entrada en caché | Salida |
+| ----------------- | ------- | ---------------- | ------ |
+| Claude Haiku 5.5  | $0,10   | $0,01            | $0,50  |
+| GPT-6 Luna        | $0,10   | $0,01            | $0,50  |
+| GPT-6.1 Terra     | $1,00   | $0,05            | $5,00  |
+| GPT-6.1 Sol       | $2,00   | $0,10            | $10,00 |
+| Claude Sonnet 5.5 | $2,00   | $0,20            | $10,00 |
 
 Precios de lista de noviembre de 2026; en OpenAI, hasta 272 000 tokens de entrada por consulta.
 La búsqueda web (bibliografía, fase 3) cuesta unos $10 por cada 1.000 búsquedas y también se
@@ -262,11 +285,11 @@ sin cambiar código.
 
 ### Dos fuentes de crédito
 
-| Fuente | Monto | Ciclo | Tope del servidor |
-|---|---|---|---|
-| API de Claude | ~$500 al mes | Mes calendario | $450 |
-| API de OpenAI | $380 (equivale a 19 asientos estándar de ChatGPT a $20) | Del 6 de cada mes al 6 del siguiente | $340 |
-| **Total** | **~$880** | | **$790** |
+| Fuente        | Monto                                                   | Ciclo                                | Tope del servidor |
+| ------------- | ------------------------------------------------------- | ------------------------------------ | ----------------- |
+| API de Claude | ~$500 al mes                                            | Mes calendario                       | $450              |
+| API de OpenAI | $380 (equivale a 19 asientos estándar de ChatGPT a $20) | Del 6 de cada mes al 6 del siguiente | $340              |
+| **Total**     | **~$880**                                               |                                      | **$790**          |
 
 - Del 1 al 6 de noviembre OpenAI tiene solo $62 prorrateados. La IA abre a mediados de mes, así
   que no afecta al piloto.
@@ -305,10 +328,10 @@ pasan a GPT-6.1 Terra.
 El máximo posible es $1 por estudiante:
 
 | Estudiantes | Gasto máximo | Dentro de los ~$790 de topes |
-|---|---|---|
-| 100 | $100 | Sí, sobra mucho |
-| 400 | $400 | Sí |
-| 790 | $790 | Es el límite |
+| ----------- | ------------ | ---------------------------- |
+| 100         | $100         | Sí, sobra mucho              |
+| 400         | $400         | Sí                           |
+| 790         | $790         | Es el límite                 |
 
 En la práctica será menos, porque no todos agotan su crédito.
 
@@ -390,12 +413,12 @@ lanzamiento. El aviso nombra a los dos proveedores.
 
 ### Qué guarda la AEMCiCD
 
-| Dato | Dónde | Contenido | Quién lo ve |
-|---|---|---|---|
-| Saldo mensual | Mongo del servidor | Usuario, mes, gastado y reservado | El estudiante (su barra) |
-| Eventos de uso | Mongo del servidor | Identificador interno, función, proveedor, modelo, tokens, costo, 👍/👎, fecha. **Sin el texto** de documentos ni de preguntas | Agregado, en el panel de la plataforma |
-| Registro del proyecto | Mongo del servidor | Resumen breve de cada acción aceptada | Estudiante y colaboradores |
-| Conversación del panel | Navegador | Texto de la conversación | Solo el estudiante; no se guarda en el servidor |
+| Dato                   | Dónde              | Contenido                                                                                                                      | Quién lo ve                                     |
+| ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Saldo mensual          | Mongo del servidor | Usuario, mes, gastado y reservado                                                                                              | El estudiante (su barra)                        |
+| Eventos de uso         | Mongo del servidor | Identificador interno, función, proveedor, modelo, tokens, costo, 👍/👎, fecha. **Sin el texto** de documentos ni de preguntas | Agregado, en el panel de la plataforma          |
+| Registro del proyecto  | Mongo del servidor | Resumen breve de cada acción aceptada                                                                                          | Estudiante y colaboradores                      |
+| Conversación del panel | Navegador          | Texto de la conversación                                                                                                       | Solo el estudiante; no se guarda en el servidor |
 
 ### Política de datos del programa
 
@@ -452,17 +475,17 @@ Antes de activar la IA:
 
 ## 12. Riesgos
 
-| Riesgo | Mitigación |
-|---|---|
-| Gasto mayor que los créditos | Crédito por estudiante, tope por proveedor y límite en cada consola |
-| Cambia o se retira el crédito de OpenAI | Todo funciona solo con Claude; se ajusta el tope o el crédito por estudiante |
-| Resultados distintos según el proveedor | Evaluación comparativa, 👍/👎 por modelo y botón «Probar con otro modelo» |
-| Las funciones de proyecto completo gastan mucho | Caché de prompts, estimación previa, Haiku cuando alcanza |
-| La IA inventa referencias o comandos | Bibliografía verificada contra el DOI; todo cambio se revisa antes de aplicarse |
-| Uso para hacer tareas completas | Presentarla como asistente de LaTeX y escritura; registro y declaración de uso |
-| Actualizaciones de Extended CE rompen el módulo | Módulo aislado y pruebas propias; probar cada versión antes de construir la imagen |
-| Un proveedor no disponible | Cambio automático al otro; si ambos fallan, mensaje claro y el editor sigue funcionando sin IA |
-| Desconfianza sobre los datos | Política de la sección 9 escrita en el aviso y en la comunicación |
+| Riesgo                                          | Mitigación                                                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Gasto mayor que los créditos                    | Crédito por estudiante, tope por proveedor y límite en cada consola                            |
+| Cambia o se retira el crédito de OpenAI         | Todo funciona solo con Claude; se ajusta el tope o el crédito por estudiante                   |
+| Resultados distintos según el proveedor         | Evaluación comparativa, 👍/👎 por modelo y botón «Probar con otro modelo»                      |
+| Las funciones de proyecto completo gastan mucho | Caché de prompts, estimación previa, Haiku cuando alcanza                                      |
+| La IA inventa referencias o comandos            | Bibliografía verificada contra el DOI; todo cambio se revisa antes de aplicarse                |
+| Uso para hacer tareas completas                 | Presentarla como asistente de LaTeX y escritura; registro y declaración de uso                 |
+| Actualizaciones de Extended CE rompen el módulo | Módulo aislado y pruebas propias; probar cada versión antes de construir la imagen             |
+| Un proveedor no disponible                      | Cambio automático al otro; si ambos fallan, mensaje claro y el editor sigue funcionando sin IA |
+| Desconfianza sobre los datos                    | Política de la sección 9 escrita en el aviso y en la comunicación                              |
 
 ## 13. Mantenimiento y despliegue
 
