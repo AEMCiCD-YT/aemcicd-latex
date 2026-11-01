@@ -22,7 +22,49 @@ export type FinConsulta = {
   modelo: string
   costo: number
   saldo: Saldo
+  explicacion?: string
+  cambios?: Cambio[]
+  aviso?: string
 }
+
+export type Cambio = {
+  archivo: string
+  antes: string
+  despues: string
+  docId: string
+  desde: number
+  hasta: number
+  huella: string
+}
+export type Solicitud = {
+  funcion: string
+  entrada: Record<string, unknown>
+  titulo: string
+  preferir?: 'alternativa'
+  maximoAceptadoMicro?: number
+}
+export type Estimacion = {
+  tokensEntrada: number
+  maximoMicro: number
+  modelos: { modelo: string; proveedor: string; maximoMicro: number }[]
+}
+
+const ruta = (projectId: string, accion: string) =>
+  `/project/${projectId}/aemcicd-ai/${accion}`
+export const estimar = (projectId: string, solicitud: Solicitud) =>
+  postJSON<Estimacion>(ruta(projectId, 'estimacion'), { body: solicitud })
+export const leerInstrucciones = (projectId: string) =>
+  getJSON<{ existe: boolean }>(ruta(projectId, 'instrucciones'))
+export const crearInstrucciones = (projectId: string) =>
+  postJSON<{ id: string }>(ruta(projectId, 'instrucciones'))
+export const validarCambio = (
+  projectId: string,
+  eventoId: string,
+  cambio: Cambio
+) =>
+  postJSON<Cambio>(ruta(projectId, 'validar-cambio'), {
+    body: { eventoId, cambio },
+  })
 
 export type ErrorConsulta = { tipo: 'error'; codigo: string; mensaje: string }
 
@@ -49,20 +91,28 @@ export function registrar(projectId: string, eventoId: string, detalle = '') {
 // La respuesta llega en NDJSON: una línea por trozo de texto y una final de cierre o error.
 export async function consultar(
   projectId: string,
-  cuerpo: { funcion: string; entrada: unknown; preferir?: 'alternativa' },
+  cuerpo: {
+    funcion: string
+    entrada: unknown
+    preferir?: 'alternativa'
+    maximoAceptadoMicro?: number
+  },
   alTexto: (texto: string) => void,
   senal: AbortSignal
 ): Promise<FinConsulta | ErrorConsulta> {
-  const res = await fetch(`/project/${projectId}/aemcicd-ai/consulta`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/x-ndjson',
-      'X-Csrf-Token': getMeta('ol-csrfToken'),
-    },
-    body: JSON.stringify(cuerpo),
-    signal: senal,
-  })
+  const res = await fetch(
+    ruta(projectId, cuerpo.funcion === 'foto_latex' ? 'foto' : 'consulta'),
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/x-ndjson',
+        'X-Csrf-Token': getMeta('ol-csrfToken'),
+      },
+      body: JSON.stringify(cuerpo),
+      signal: senal,
+    }
+  )
   if (res.status === 429) {
     return {
       tipo: 'error',
@@ -74,7 +124,10 @@ export async function consultar(
     return {
       tipo: 'error',
       codigo: 'interno',
-      mensaje: 'Algo falló. Inténtalo de nuevo.',
+      mensaje:
+        res.status === 413
+          ? 'La imagen supera el tamaño permitido.'
+          : 'Algo falló. Inténtalo de nuevo.',
     }
   }
   const lector = res.body.pipeThrough(new TextDecoderStream()).getReader()

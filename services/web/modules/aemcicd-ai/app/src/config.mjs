@@ -66,6 +66,11 @@ export function leerConfig(env = process.env) {
     // Solo los administradores del servidor ven y usan la IA: para probarla en producción antes
     // de abrirla a los estudiantes.
     soloAdmins: env.AEMCICD_AI_ONLY_ADMINS === 'true',
+    maxTokensProyecto: numero(
+      env.AEMCICD_AI_MAX_PROJECT_TOKENS,
+      150000,
+      'AEMCICD_AI_MAX_PROJECT_TOKENS'
+    ),
     claves,
     proveedores,
     creditoMensualMicro: aMicro(

@@ -1035,7 +1035,12 @@ module.exports = {
     sourceEditorExtensions: [],
     sourceEditorVisualExtensions: [],
     sourceEditorComponents: [],
-    pdfLogEntryHeaderActionComponents: [],
+    pdfLogEntryHeaderActionComponents: [
+      Path.resolve(
+        __dirname,
+        '../modules/aemcicd-ai/frontend/js/components/corregir-log.tsx'
+      ),
+    ],
     pdfLogEntryComponents: [],
     pdfLogEntriesComponents: [],
     pdfPreviewPromotions: [],
@@ -1051,7 +1056,12 @@ module.exports = {
     sourceEditorToolbarButtonGroups: [],
     sourceEditorToolbarComponents: [],
     sourceEditorToolbarEndButtons: [],
-    rootContextProviders: [],
+    rootContextProviders: [
+      Path.resolve(
+        __dirname,
+        '../modules/aemcicd-ai/frontend/js/solicitud-context.tsx'
+      ),
+    ],
     mainEditorLayoutModals: [
       Path.resolve(
         __dirname,
@@ -1174,7 +1184,12 @@ module.exports = {
     referenceSearchSetting: [],
     settingsModalEditorTabSections: [],
     settingsModalSpellcheckSections: [],
-    editorFloatingMenuActions: [],
+    editorFloatingMenuActions: [
+      Path.resolve(
+        __dirname,
+        '../modules/aemcicd-ai/frontend/js/components/acciones-seleccion.tsx'
+      ),
+    ],
     errorLogsComponents: [],
     referenceIndices: [
       Path.resolve(

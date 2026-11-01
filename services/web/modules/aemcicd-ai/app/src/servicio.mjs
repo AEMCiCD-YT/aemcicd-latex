@@ -9,6 +9,19 @@ import {
   salidaQueCabe,
 } from './precios.mjs'
 import * as saldos from './saldos.mjs'
+import { randomUUID } from 'node:crypto'
+import { Output, jsonSchema } from 'ai'
+import { ESQUEMA_CAMBIOS } from './cambios.mjs'
+
+// Salida estructurada para las funciones con propuesta: el API obliga al modelo a devolver JSON
+// con el esquema exacto. En la evaluación, Claude Sonnet 5.5 a veces respondía en Markdown pese a
+// la instrucción. En Claude se fuerza el modo nativo (outputFormat): el SDK no reconoce los
+// modelos 5.5 y usaría su alternativa jsonTool, una herramienta forzada que esos modelos
+// rechazan con un 400.
+const SALIDA_CAMBIOS = Output.object({
+  schema: jsonSchema(ESQUEMA_CAMBIOS),
+  name: 'propuesta_de_cambios',
+})
 
 // Une las opciones por proveedor sin que una pise a otra (p. ej. store y reasoningEffort).
 function combinarOpciones(...lista) {
@@ -106,21 +119,92 @@ export function crearServicio({
     return insertedId
   }
 
+  function prepararConsulta(funcion, entrada, contextoProyecto = {}) {
+    const def = definicion(funcion)
+    const preparada = def.preparar(entrada, contextoProyecto)
+    // Los bytes de la imagen no son texto tokenizable. Se reserva una cota visual separada.
+    const sinImagen = preparada.mensajes.map(m => ({
+      ...m,
+      content: Array.isArray(m.content)
+        ? m.content.filter(p => p.type !== 'image' && p.type !== 'file')
+        : m.content,
+    }))
+    const tokensEntrada =
+      estimarTokens(preparada.sistema) +
+      estimarTokens(JSON.stringify(sinImagen)) +
+      (preparada.tokensVisuales || 0)
+    return { def, ...preparada, tokensEntrada }
+  }
+
+  function estimar({ funcion, entrada, contextoProyecto, preferir }) {
+    const { def, tokensEntrada } = prepararConsulta(
+      funcion,
+      entrada,
+      contextoProyecto
+    )
+    const modelos = candidatos(def.nivel, config, { preferir }).map(c => ({
+      proveedor: c.proveedor,
+      modelo: c.modelo,
+      maximoMicro: costoMaximo(
+        c.modelo,
+        tokensEntrada,
+        def.maxSalida,
+        config.precios
+      ),
+    }))
+    return {
+      tokensEntrada,
+      modelos,
+      maximoMicro: Math.max(0, ...modelos.map(m => m.maximoMicro)),
+    }
+  }
+
+  async function eventoPropio(userId, projectId, eventoId) {
+    return Boolean(
+      await c.eventos.findOne(
+        { _id: eventoId, userId, projectId, estado: 'ok' },
+        { projection: { _id: 1 } }
+      )
+    )
+  }
+
   // Ejecuta una función de IA. `alEscribir(texto)` recibe la respuesta en trozos.
-  async function consultar({
+  async function ejecutarConsulta({
     userId,
     funcion,
     entrada,
     preferir,
     alEscribir,
     senal,
+    projectId,
+    contextoProyecto,
+    maximoAceptadoMicro,
   }) {
     if (!config.habilitada) throw error('deshabilitada')
     if (!(await activada(userId))) throw error('no_activada')
-    const def = definicion(funcion)
-    const { sistema, mensajes, opciones = {} } = def.preparar(entrada)
-    const tokensEntrada =
-      estimarTokens(sistema) + estimarTokens(JSON.stringify(mensajes))
+    const {
+      def,
+      sistema,
+      mensajes,
+      opciones = {},
+      tokensEntrada,
+    } = prepararConsulta(funcion, entrada, contextoProyecto)
+    if (funcion === 'chat_proyecto') {
+      const estimacion = estimar({
+        funcion,
+        entrada,
+        contextoProyecto,
+        preferir,
+      })
+      if (
+        !Number.isSafeInteger(maximoAceptadoMicro) ||
+        maximoAceptadoMicro < estimacion.maximoMicro
+      )
+        throw new ErrorIA(
+          'estimacion',
+          'Revisa la estimación del proyecto antes de consultar. El contenido o el costo pudieron cambiar.'
+        )
+    }
 
     const fecha = ahora()
     const creditoId = idCredito(userId, fecha)
@@ -189,9 +273,13 @@ export function crearServicio({
           abortSignal: senal,
           // Los errores se tratan abajo (fullStream); sin esto el SDK los imprime en la consola.
           onError: () => {},
+          ...(def.propuesta && { output: SALIDA_CAMBIOS }),
           providerOptions: combinarOpciones(
             // Que OpenAI no guarde las respuestas en su plataforma (Responses API).
             { openai: { store: false } },
+            def.propuesta && {
+              anthropic: { structuredOutputMode: 'outputFormat' },
+            },
             opcionesDeEsfuerzo(cand),
             opciones.providerOptions
           ),
@@ -218,6 +306,7 @@ export function crearServicio({
         )
         const eventoId = await registrarEvento({
           userId,
+          ...(projectId ? { projectId } : {}),
           funcion,
           nivel: def.nivel,
           proveedor: cand.proveedor,
@@ -243,6 +332,7 @@ export function crearServicio({
         const cancelada = senal?.aborted
         await registrarEvento({
           userId,
+          ...(projectId ? { projectId } : {}),
           funcion,
           nivel: def.nivel,
           proveedor: cand.proveedor,
@@ -263,6 +353,48 @@ export function crearServicio({
     throw error('no_disponible')
   }
 
+  // Una consulta por estudiante entre pestañas y procesos, sin guardar contenido.
+  async function consultar(peticion) {
+    if (!config.habilitada) throw error('deshabilitada')
+    if (!(await activada(peticion.userId))) throw error('no_activada')
+    const id = randomUUID()
+    const fecha = ahora()
+    const bloqueo = await c.usuarios.updateOne(
+      {
+        _id: peticion.userId,
+        $or: [
+          { consultaHasta: { $exists: false } },
+          { consultaHasta: { $lte: fecha } },
+        ],
+      },
+      {
+        $set: {
+          consultaId: id,
+          consultaHasta: new Date(fecha.getTime() + saldos.RESERVA_MAX_MS),
+        },
+      }
+    )
+    if (!bloqueo.matchedCount)
+      throw new ErrorIA(
+        'ocupada',
+        'Ya tienes una consulta en curso. Espera a que termine.'
+      )
+    try {
+      const limite = AbortSignal.timeout(10 * 60 * 1000)
+      return await ejecutarConsulta({
+        ...peticion,
+        senal: peticion.senal
+          ? AbortSignal.any([peticion.senal, limite])
+          : limite,
+      })
+    } finally {
+      await c.usuarios.updateOne(
+        { _id: peticion.userId, consultaId: id },
+        { $unset: { consultaId: '', consultaHasta: '' } }
+      )
+    }
+  }
+
   async function valorar(userId, eventoId, valoracion) {
     if (![1, -1, null].includes(valoracion))
       throw new ErrorIA('entrada', 'valoración no válida')
@@ -281,6 +413,8 @@ export function crearServicio({
       estado: 'ok',
     })
     if (!evento) return false
+    if (evento.projectId && String(evento.projectId) !== String(projectId))
+      return false
     const def = definicion(evento.funcion)
     const resumen = [def.resumen(), String(detalle).trim().slice(0, 120)]
       .filter(Boolean)
@@ -322,6 +456,8 @@ export function crearServicio({
     activar,
     saldo,
     consultar,
+    estimar,
+    eventoPropio,
     valorar,
     registrar,
     verRegistro,

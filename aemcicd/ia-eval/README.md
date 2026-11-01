@@ -17,5 +17,16 @@ Solo algunos modelos:
 bash aemcicd/ia-eval/evaluar.sh gpt-6-luna,claude-haiku-5-5
 ```
 
-Las claves se leen del Key Vault y no se muestran. Los 20 casos con los 5 modelos cuestan
-alrededor de $0,40. Para añadir casos reales, agréguelos a `casos.json` sin datos personales.
+Las claves se leen del Key Vault y no se muestran. La evaluación base tenía 20 casos; ahora hay
+44, incluidos tres por cada función nueva de fase 1. El costo histórico de unos $0,40 para los
+20 casos no es una estimación de esta batería ampliada: incluye visión y proyectos completos.
+No se ha ejecutado la batería nueva contra las API reales durante esta implementación.
+
+Cada caso admite `funcion`, `entrada`, `archivos` (un proyecto sintético) e `imagen` (ruta a una
+imagen de `fixtures/`). `preparar-caso.mjs` usa el lector y el catálogo del módulo para construir
+el mismo contexto que el servidor. Los casos anteriores sin `funcion` siguen usando `pregunta`.
+Las tres imágenes son ejemplos sintéticos de una ecuación, una matriz y una tabla; no contienen
+datos personales. El informe muestra la función de cada caso.
+
+Para añadir casos reales, agrégalos a `casos.json` sin datos personales. Este evaluador es una
+herramienta comparativa aislada, no una ruta del producto: no usa cuentas ni crédito de estudiantes.
