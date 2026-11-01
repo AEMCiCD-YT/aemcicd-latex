@@ -427,7 +427,8 @@ export default async function (webRouter, privateApiRouter, publicApiRouter) {
       zoteroEnabled: !!Settings.zotero?.clientKey && !!Settings.zotero?.clientSecret,
       aemcicdAiEnabled:
         !!Settings.aemcicdAi?.enabled &&
-        (!Settings.aemcicdAi.soloAdmins || !!req.session?.user?.isAdmin),
+        (!Settings.aemcicdAi.soloAdmins ||
+          !!SessionManager.getSessionUser(req.session)?.isAdmin),
       enablePandocConversions: Settings.enablePandocConversions,
       mixpanelLabsToken:
         Settings.labs?.enable && Settings.analytics?.mixpanel?.labsToken,
