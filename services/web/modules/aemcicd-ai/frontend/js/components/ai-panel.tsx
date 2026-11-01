@@ -8,12 +8,25 @@ import withErrorBoundary from '@/infrastructure/error-boundary'
 import {
   EstadoIA,
   Saldo,
+  Cambio,
+  Solicitud,
+  Estimacion,
   activar,
   consultar,
+  estimar,
+  leerInstrucciones,
+  crearInstrucciones,
   leerEstado,
   valorar,
 } from '../api'
 import Respuesta from './respuesta'
+import { useSolicitudIA } from '../solicitud-context'
+import { useEditorOpenDocContext } from '@/features/ide-react/context/editor-open-doc-context'
+import { useEditorPropertiesContext } from '@/features/ide-react/context/editor-properties-context'
+import { useEditorManagerContext } from '@/features/ide-react/context/editor-manager-context'
+import { useFileTreePathContext } from '@/features/file-tree/contexts/file-tree-path'
+import { usePermissionsContext } from '@/features/ide-react/context/permissions-context'
+import { prepararImagen } from '../imagen'
 import '../../stylesheets/aemcicd-ai.scss'
 
 export type Turno = {
@@ -29,6 +42,9 @@ export type Turno = {
   // Confirmación visible del 👍/👎 (se borra a los pocos segundos).
   voto?: 'guardado' | 'quitado' | 'error'
   alternativa?: boolean
+  solicitud: Solicitud
+  cambios?: Cambio[]
+  aviso?: string
 }
 
 // El saldo se muestra truncado: con $0,995 disponibles se lee $0,99, no $1,00.
@@ -138,8 +154,27 @@ function AiPanel() {
   const [errorEstado, setErrorEstado] = useState(false)
   const [turnos, setTurnos] = useState<Turno[]>([])
   const [pregunta, setPregunta] = useState('')
+  const [funcion, setFuncion] = useState('pregunta')
+  const [usarProyecto, setUsarProyecto] = useState(false)
+  const [imagen, setImagen] = useState<{ base64: string } | null>(null)
+  const [nombreImagen, setNombreImagen] = useState('')
+  const [aviso, setAviso] = useState('')
+  const [tieneInstrucciones, setTieneInstrucciones] = useState<boolean | null>(
+    null
+  )
+  const [confirmacion, setConfirmacion] = useState<{
+    solicitud: Solicitud
+    estimacion: Estimacion
+  } | null>(null)
+  const { pendiente, consumir, ocupado, setOcupado } = useSolicitudIA()
+  const { currentDocument, currentDocumentId } = useEditorOpenDocContext()
+  const { showVisual } = useEditorPropertiesContext()
+  const { openDocWithId } = useEditorManagerContext()
+  const { pathInFolder } = useFileTreePathContext()
+  const permisos = usePermissionsContext()
   const control = useRef<AbortController | null>(null)
   const fin = useRef<HTMLDivElement>(null)
+  const archivoImagen = useRef<HTMLInputElement>(null)
   const siguienteId = useRef(1)
 
   const cargar = useCallback(() => {
@@ -155,15 +190,26 @@ function AiPanel() {
   }, [cargar])
 
   useEffect(() => {
+    if (estado?.habilitada && estado.activada)
+      leerInstrucciones(projectId)
+        .then(r => setTieneInstrucciones(r.existe))
+        .catch(() =>
+          setAviso('No se pudieron comprobar las instrucciones del proyecto.')
+        )
+  }, [projectId, estado?.habilitada, estado?.activada])
+
+  useEffect(() => {
     fin.current?.scrollIntoView({ block: 'end' })
   }, [turnos])
-
-  const ocupado = turnos.some(t => t.estado === 'escribiendo')
 
   const actualizar = (id: number, cambio: (t: Turno) => Partial<Turno>) =>
     setTurnos(ts => ts.map(t => (t.id === id ? { ...t, ...cambio(t) } : t)))
 
-  const preguntar = async (texto: string, preferir?: 'alternativa') => {
+  const preguntar = async (solicitud: Solicitud) => {
+    if (control.current) return
+    setOcupado(true)
+    setConfirmacion(null)
+    const { titulo: texto, preferir } = solicitud
     const id = siguienteId.current++
     setTurnos(ts => [
       ...ts,
@@ -173,22 +219,26 @@ function AiPanel() {
         texto: '',
         estado: 'escribiendo',
         alternativa: !!preferir,
+        solicitud,
       },
     ])
     control.current = new AbortController()
     try {
       const r = await consultar(
         projectId,
-        { funcion: 'pregunta', entrada: { pregunta: texto }, preferir },
+        solicitud,
         trozo => actualizar(id, t => ({ texto: t.texto + trozo })),
         control.current.signal
       )
       if (r.tipo === 'fin') {
-        actualizar(id, () => ({
+        actualizar(id, t => ({
           estado: 'lista',
           eventoId: r.eventoId,
           modelo: r.modelo,
           costo: r.costo,
+          texto: r.explicacion ?? t.texto,
+          cambios: r.cambios,
+          aviso: r.aviso,
         }))
         setEstado(e => (e ? { ...e, saldo: r.saldo } : e))
       } else {
@@ -204,15 +254,106 @@ function AiPanel() {
           error: 'No hay conexión con el servidor.',
         }))
       }
+    } finally {
+      control.current = null
+      setOcupado(false)
+    }
+  }
+
+  const iniciar = async (solicitud: Solicitud) => {
+    if (ocupado || control.current) return
+    setAviso('')
+    setConfirmacion(null)
+    if (solicitud.funcion !== 'chat_proyecto') return preguntar(solicitud)
+    setOcupado(true)
+    try {
+      const estimacion = await estimar(projectId, solicitud)
+      setConfirmacion({ solicitud, estimacion })
+    } catch (err) {
+      const datos = (err as { data?: { mensaje?: string } }).data
+      setAviso(
+        datos?.mensaje || 'No se pudo estimar el proyecto. Inténtalo de nuevo.'
+      )
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  useEffect(() => {
+    if (
+      pendiente &&
+      estado?.habilitada &&
+      estado.activada &&
+      !control.current
+    ) {
+      consumir()
+      iniciar(pendiente)
+    }
+  })
+
+  const destinoActual = () => {
+    const view = currentDocument?.cm6?.view
+    const archivo = currentDocumentId && pathInFolder(currentDocumentId)
+    if (!view || !archivo || showVisual) return {}
+    const { from: desde, to: hasta } = view.state.selection.main
+    return {
+      archivo,
+      desde,
+      hasta,
+      seleccion: view.state.sliceDoc(desde, hasta),
     }
   }
 
   const enviar = (e: Pick<FormEvent, 'preventDefault'>) => {
     e.preventDefault()
     const texto = pregunta.trim()
-    if (!texto || ocupado) return
+    if ((!texto && !imagen) || ocupado) return
     setPregunta('')
-    preguntar(texto)
+    const elegida = imagen
+      ? 'foto_latex'
+      : usarProyecto
+        ? 'chat_proyecto'
+        : funcion
+    iniciar({
+      funcion: elegida,
+      titulo: texto || `Transcribir ${nombreImagen}`,
+      entrada: {
+        pregunta: texto,
+        ...(imagen ? { imagen } : {}),
+        ...(!['pregunta', 'chat_proyecto'].includes(elegida)
+          ? destinoActual()
+          : {}),
+      },
+    })
+    setImagen(null)
+    setNombreImagen('')
+  }
+
+  const subir = async (archivo?: File) => {
+    if (!archivo || ocupado) return
+    setOcupado(true)
+    setAviso('')
+    setImagen(null)
+    setNombreImagen('')
+    try {
+      setImagen(await prepararImagen(archivo))
+      setNombreImagen(archivo.name)
+      setUsarProyecto(false)
+    } catch (err) {
+      setAviso((err as Error).message || 'No se pudo leer la imagen.')
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  const crearArchivoInstrucciones = async () => {
+    try {
+      const r = await crearInstrucciones(projectId)
+      setTieneInstrucciones(true)
+      await openDocWithId(r.id)
+    } catch {
+      setAviso('No se pudieron crear las instrucciones. Inténtalo de nuevo.')
+    }
   }
 
   const alValorar = async (t: Turno, valor: 1 | -1) => {
@@ -269,17 +410,157 @@ function AiPanel() {
               key={t.id}
               turno={t}
               alValorar={v => alValorar(t, v)}
-              alProbarOtro={() => preguntar(t.pregunta, 'alternativa')}
+              alProbarOtro={() =>
+                iniciar({ ...t.solicitud, preferir: 'alternativa' })
+              }
               ocupado={ocupado}
             />
           ))}
           <div ref={fin} />
         </div>
         <form className="aemcicd-ai-formulario" onSubmit={enviar}>
+          {tieneInstrucciones === false && permisos.write && (
+            <OLButton
+              size="sm"
+              variant="link"
+              onClick={crearArchivoInstrucciones}
+            >
+              Crear instrucciones del proyecto
+            </OLButton>
+          )}
+          <div className="aemcicd-ai-acciones" aria-label="Acciones rápidas">
+            {[
+              [
+                'formula_texto',
+                'Fórmula desde texto',
+                'Escribe en LaTeX: integral de 0 a infinito de e a la menos x al cuadrado.',
+              ],
+              [
+                'tabla_excel',
+                'Tabla desde Excel',
+                'Pega aquí los datos de Excel (tabuladores o CSV):\n',
+              ],
+              [
+                'esqueleto',
+                'Esqueleto de documento',
+                'Crea una estructura para un informe de laboratorio de Física II.',
+              ],
+            ].map(([clave, titulo, plantilla]) => (
+              <OLButton
+                key={clave}
+                size="sm"
+                variant={funcion === clave ? 'primary' : 'secondary'}
+                disabled={ocupado}
+                onClick={() => {
+                  setFuncion(clave)
+                  setPregunta(plantilla)
+                  setUsarProyecto(false)
+                  setImagen(null)
+                  setNombreImagen('')
+                }}
+              >
+                {titulo}
+              </OLButton>
+            ))}
+            <OLButton
+              size="sm"
+              variant="link"
+              disabled={ocupado}
+              onClick={() => {
+                setFuncion('pregunta')
+                setImagen(null)
+                setNombreImagen('')
+              }}
+            >
+              Pregunta libre
+            </OLButton>
+          </div>
+          <div className="aemcicd-ai-adjunto">
+            <OLButton
+              size="sm"
+              variant="secondary"
+              disabled={ocupado}
+              onClick={() => archivoImagen.current?.click()}
+            >
+              Subir foto o PDF a LaTeX
+            </OLButton>
+            <input
+              ref={archivoImagen}
+              hidden
+              aria-label="Foto o PDF a LaTeX"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,application/pdf"
+              disabled={ocupado}
+              onChange={e => {
+                subir(e.target.files?.[0])
+                e.target.value = ''
+              }}
+            />
+          </div>
+          {imagen && (
+            <div role="status">
+              {nombreImagen}{' '}
+              <OLButton
+                size="sm"
+                variant="link"
+                onClick={() => {
+                  setImagen(null)
+                  setNombreImagen('')
+                }}
+              >
+                Quitar imagen
+              </OLButton>
+            </div>
+          )}
+          <label>
+            <input
+              type="checkbox"
+              checked={usarProyecto}
+              disabled={ocupado || !!imagen}
+              onChange={e => setUsarProyecto(e.target.checked)}
+            />{' '}
+            Usar todo el proyecto
+          </label>
+          {aviso && (
+            <p className="aemcicd-ai-error" role="alert">
+              {aviso}
+            </p>
+          )}
+          {confirmacion && (
+            <div className="aemcicd-ai-estimacion" role="status">
+              <p>
+                Se enviarán unos{' '}
+                {confirmacion.estimacion.tokensEntrada.toLocaleString('es-EC')}{' '}
+                tokens. Costo máximo estimado: $
+                {(confirmacion.estimacion.maximoMicro / 1e6).toFixed(4)},
+                incluyendo la alternativa. Se cobra el uso real.
+              </p>
+              <OLButton
+                size="sm"
+                variant="primary"
+                disabled={ocupado}
+                onClick={() =>
+                  preguntar({
+                    ...confirmacion.solicitud,
+                    maximoAceptadoMicro: confirmacion.estimacion.maximoMicro,
+                  })
+                }
+              >
+                Consultar con este costo
+              </OLButton>
+              <OLButton
+                size="sm"
+                variant="secondary"
+                onClick={() => setConfirmacion(null)}
+              >
+                Cancelar
+              </OLButton>
+            </div>
+          )}
           <textarea
             className="form-control"
             rows={3}
-            maxLength={4000}
+            maxLength={funcion === 'tabla_excel' ? 20000 : 4000}
             placeholder="Escribe tu pregunta…"
             aria-label="Pregunta para la IA"
             value={pregunta}
@@ -299,7 +580,7 @@ function AiPanel() {
             <OLButton
               type="submit"
               variant="primary"
-              disabled={!pregunta.trim()}
+              disabled={!pregunta.trim() && !imagen}
             >
               Preguntar
             </OLButton>

@@ -4,6 +4,7 @@ import OLIconButton from '@/shared/components/ol/ol-icon-button'
 import OLTooltip from '@/shared/components/ol/ol-tooltip'
 import Markdown from './markdown'
 import type { Turno } from './ai-panel'
+import Propuesta from './propuesta'
 
 // Los bloques ```…``` van aparte, con botón de copiar; el resto se muestra como Markdown.
 function Texto({ texto, terminado }: { texto: string; terminado: boolean }) {
@@ -97,6 +98,16 @@ export default function Respuesta({
           </p>
         )}
       </div>
+      {turno.estado === 'lista' &&
+        turno.eventoId &&
+        turno.cambios?.map((cambio, i) => (
+          <Propuesta key={i} cambio={cambio} eventoId={turno.eventoId!} />
+        ))}
+      {turno.aviso && (
+        <p className="aemcicd-ai-error" role="alert">
+          {turno.aviso}
+        </p>
+      )}
       {turno.estado === 'lista' && (
         <div className="aemcicd-ai-pie">
           <span className="aemcicd-ai-modelo">
