@@ -190,28 +190,43 @@ En ambos:
 
 ## 5. Modelos por función
 
-### Asignación inicial
+### Asignación (tras la evaluación del 1 de noviembre de 2026)
 
-| Nivel | Funciones | Modelo inicial | Alternativa |
+| Nivel | Funciones | Modelo principal | Alternativa |
 |---|---|---|---|
-| **Rápido** | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, de código a algoritmo, resumen del historial | GPT-6 Luna | Claude Haiku 5.5 |
-| **Avanzado, proyecto completo** | Chat con el proyecto, revisor tipo jurado, coherencia de notación, Beamer y pósteres, importaciones | GPT-6.1 Terra | Claude Sonnet 5.5 |
-| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin | Claude Sonnet 5.5 | GPT-6.1 Sol |
+| **Rápido** | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, de código a algoritmo, resumen del historial | GPT-6.1 Terra, esfuerzo bajo | Claude Haiku 5.5, esfuerzo bajo |
+| **Avanzado, proyecto completo** | Chat con el proyecto, revisor tipo jurado, coherencia de notación, Beamer y pósteres, importaciones | GPT-6.1 Terra, esfuerzo medio | Claude Sonnet 5.5, esfuerzo medio |
+| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin | Claude Sonnet 5.5, esfuerzo medio | GPT-6.1 Sol, esfuerzo medio |
 
-Criterios de esta asignación inicial:
+El **esfuerzo** es cuánto razona el modelo antes de responder. Ese razonamiento no se ve, pero se
+cobra como salida: Claude Haiku 5.5 y Sonnet 5.5 razonan por defecto (medio y alto).
 
-- Los modelos rápidos de ambos cuestan lo mismo; se empieza por OpenAI para usar su crédito, que
-  vence cada ciclo.
-- Las funciones que leen todo el proyecto son las que más tokens gastan: GPT-6.1 Terra cuesta la
-  mitad que Sonnet o Sol.
-- Para la escritura y la visión se empieza por Sonnet, que consume el crédito de Claude.
+Resultado de la evaluación (20 casos, misma instrucción que el servidor, esfuerzo por defecto):
+
+| Modelo | Costo por consulta | Errores encontrados al revisar |
+|---|---|---|
+| GPT-6 Luna | $0,0002 | Una corrección que vuelve a fallar (`\textbf` con un párrafo dentro) y un ajuste de Overleaf que no existe |
+| Claude Haiku 5.5 | $0,0004 | Afirma que `amssymb` carga `amsmath` (falso); el diagrama TikZ se cortó por el límite de salida |
+| GPT-6.1 Terra | $0,0016 | Ninguno |
+| Claude Sonnet 5.5 | $0,0081 | Ninguno; respuestas más completas, pero cinco veces más caras que Terra y un diagrama cortado |
+| GPT-6.1 Sol | $0,0028 | Sistema de ecuaciones con `cases` y `&=`, que no alinea como dice |
+
+Segunda ronda con el esfuerzo ajustado (Terra y Haiku bajo, Sonnet y Sol medio): ninguna
+respuesta cortada, Terra bajó a $0,0011 por consulta y responde en 1 segundo en lugar de 2,4.
+Persistían dos imprecisiones por no conocer el servidor (pedir que se «seleccione Biber» y nombrar
+los menús en inglés) y Haiku usó una librería de TikZ sin cargarla; las instrucciones ahora
+describen el servidor y exigen código que compile tal cual.
+
+Por eso el nivel rápido pasa de Luna a Terra: cuesta ocho veces más, pero sigue en unos $0,32
+por estudiante al mes con 200 consultas, y la función más usada (corregir errores) no puede
+proponer arreglos que no compilan. El límite de salida sube de 1500 a 4000 tokens.
 
 La asignación vive en un archivo de configuración (`AEMCICD_AI_ROUTES`) y se cambia sin tocar
 código.
 
 ### Evaluación comparativa (base)
 
-Antes de abrir la fase 1 se prueba un conjunto de unos 40 casos reales y anónimos (errores de
+Antes de abrir la fase 1 se prueba un conjunto de casos reales y anónimos (errores de
 compilación, fórmulas, fotos de cuaderno, tablas, párrafos para reescribir) con los modelos de
 cada nivel. Se compara si compila, si es correcto, la calidad del español y el costo, y se ajusta
 la tabla de arriba. Durante el piloto, el 👍/👎 por modelo confirma o corrige esa elección.
