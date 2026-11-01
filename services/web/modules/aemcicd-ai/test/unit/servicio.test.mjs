@@ -7,6 +7,7 @@ import { leerConfig } from '../../app/src/config.mjs'
 import { aMicro } from '../../app/src/precios.mjs'
 import * as saldos from '../../app/src/saldos.mjs'
 import { crearServicio, ErrorIA } from '../../app/src/servicio.mjs'
+import { ENTRADAS, CONTEXTO } from './casos-fase1.mjs'
 import {
   conectar,
   desconectar,
@@ -27,6 +28,12 @@ const env = {
     rapido: [
       { proveedor: 'openai', modelo: 'gpt-6-luna', esfuerzo: 'low' },
       { proveedor: 'anthropic', modelo: 'claude-haiku-5-5', esfuerzo: 'low' },
+    ],
+    proyecto: [
+      { proveedor: 'openai', modelo: 'gpt-6-luna', esfuerzo: 'medium' },
+    ],
+    escritura: [
+      { proveedor: 'openai', modelo: 'gpt-6-luna', esfuerzo: 'medium' },
     ],
   }),
 }
@@ -307,4 +314,133 @@ test('resumen mensual: solo totales, sin identificadores', async () => {
   assert.equal(luna.utiles, 1)
   const texto = JSON.stringify(r)
   assert.equal(texto.includes(String(a)) || texto.includes(String(b)), false)
+})
+
+for (const [funcion, entrada] of Object.entries(ENTRADAS)) {
+  test(`${funcion}: cobra el uso real y no guarda documentos, instrucciones, preguntas, imágenes ni respuestas`, async () => {
+    const userId = new ObjectId(),
+      projectId = new ObjectId()
+    let pedido
+    const modelo = modeloQueResponde(['RESPUESTA_NO_PERSISTIR'], uso(2000, 400))
+    const original = modelo.doStream
+    modelo.doStream = async opciones => {
+      pedido = opciones
+      return original.call(modelo, opciones)
+    }
+    const s = servicio({ modelos: { 'gpt-6-luna': modelo } })
+    await s.activar(userId, '2026-11')
+    const p = { funcion, entrada, contextoProyecto: CONTEXTO }
+    const estimacion = s.estimar(p)
+    const r = await consultar(s, userId, {
+      ...p,
+      projectId,
+      maximoAceptadoMicro: estimacion.maximoMicro,
+    })
+    assert.equal(r.costoMicro, 400)
+    assert.equal(r.saldo.gastadoMicro, 400)
+    assert.equal(
+      (await c.presupuestos.findOne({ _id: 'openai:2026-11' })).gastadoMicro,
+      400
+    )
+    assert.ok(pedido)
+    const evento = await c.eventos.findOne({ _id: r.eventoId })
+    assert.equal(evento.funcion, funcion)
+    assert.deepEqual(
+      Object.keys(evento).sort(),
+      [
+        '_id',
+        'fecha',
+        'valoracion',
+        'userId',
+        'projectId',
+        'funcion',
+        'nivel',
+        'proveedor',
+        'modelo',
+        'alternativa',
+        'tokensEntrada',
+        'tokensCache',
+        'tokensSalida',
+        'costoMicro',
+        'estado',
+      ].sort()
+    )
+    const guardado = JSON.stringify(
+      await Promise.all(Object.values(c).map(col => col.find({}).toArray()))
+    )
+    for (const secreto of [
+      'RESPUESTA_NO_PERSISTIR',
+      CONTEXTO.instrucciones,
+      CONTEXTO.destino.seleccion,
+      entrada.pregunta,
+      entrada.imagen?.base64,
+      entrada.mensaje,
+    ].filter(Boolean))
+      assert.equal(
+        guardado.includes(secreto),
+        false,
+        'no debe persistir contenido'
+      )
+    assert.equal(await s.eventoPropio(userId, projectId, r.eventoId), true)
+    assert.equal(
+      await s.eventoPropio(userId, new ObjectId(), r.eventoId),
+      false
+    )
+    assert.equal(
+      await s.registrar(new ObjectId(), userId, r.eventoId, 'main.tex'),
+      false
+    )
+  })
+}
+
+test('chat: no llama al modelo hasta aceptar la cota; un proyecto más caro requiere otra estimación', async () => {
+  const userId = new ObjectId()
+  const s = servicio()
+  await s.activar(userId, '2026-11')
+  const p = {
+    funcion: 'chat_proyecto',
+    entrada: ENTRADAS.chat_proyecto,
+    contextoProyecto: CONTEXTO,
+  }
+  const e = s.estimar(p)
+  assert.ok(e.tokensEntrada > 0 && e.maximoMicro > 0)
+  for (const maximoAceptadoMicro of [undefined, e.maximoMicro - 1, -1, 'mucho'])
+    await assert.rejects(
+      consultar(s, userId, { ...p, maximoAceptadoMicro }),
+      e => e.codigo === 'estimacion'
+    )
+  assert.equal(await c.eventos.countDocuments(), 0)
+  assert.equal((await s.saldo(userId)).gastadoMicro, 0)
+})
+
+test('una consulta simultánea del mismo estudiante se rechaza sin cobrar y libera el bloqueo al terminar', async () => {
+  const userId = new ObjectId()
+  const s = servicio({
+    modelos: { 'gpt-6-luna': () => modeloQueResponde(['Respuesta']) },
+  })
+  await s.activar(userId, '2026-11')
+  let continuar
+  let entro
+  const entrada = new Promise(resolve => {
+    entro = resolve
+  })
+  const pausa = new Promise(resolve => {
+    continuar = resolve
+  })
+  const primera = consultar(s, userId, {
+    alEscribir: async () => {
+      entro()
+      await pausa
+    },
+  })
+  await entrada
+  await assert.rejects(consultar(s, userId), e => e.codigo === 'ocupada')
+  continuar()
+  await primera
+  await consultar(s, userId)
+  assert.equal(await c.eventos.countDocuments(), 2)
+  assert.equal(
+    (await c.usuarios.findOne({ _id: userId })).consultaId,
+    undefined
+  )
 })

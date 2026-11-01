@@ -3,12 +3,15 @@ import assert from 'node:assert/strict'
 import { streamText } from 'ai'
 import { crearFabrica } from '../../app/src/proveedores.mjs'
 import { funcion } from '../../app/src/funciones.mjs'
+import { ENTRADAS, CONTEXTO, PNG } from './casos-fase1.mjs'
 
 // Captura la petición HTTP que el SDK enviaría a cada API, sin red.
 async function peticion(
   proveedor,
   modelo,
-  providerOptions = { openai: { store: false } }
+  providerOptions = { openai: { store: false } },
+  nombre = 'pregunta',
+  entrada = { pregunta: 'hola', seleccion: '\\section{A}' }
 ) {
   let capturada
   const fetch = async (url, init) => {
@@ -23,10 +26,7 @@ async function peticion(
     { anthropic: 'clave-a', openai: 'clave-o' },
     { fetch }
   )
-  const { sistema, mensajes } = funcion('pregunta').preparar({
-    pregunta: 'hola',
-    seleccion: '\\section{A}',
-  })
+  const { sistema, mensajes } = funcion(nombre).preparar(entrada, CONTEXTO)
   const r = streamText({
     model: crear({ proveedor, modelo }),
     system: sistema,
@@ -72,4 +72,55 @@ test('esfuerzo de razonamiento en la petición de cada API', async () => {
     anthropic: { effort: 'low' },
   })
   assert.equal(a.body.output_config.effort, 'low')
+})
+
+test('visión: Sonnet y Sol reciben la imagen real mediante sus API HTTP, sin red', async () => {
+  const a = await peticion(
+    'anthropic',
+    'claude-sonnet-5-5',
+    { anthropic: { effort: 'medium' } },
+    'foto_latex',
+    ENTRADAS.foto_latex
+  )
+  const imagenA = a.body.messages
+    .flatMap(m => m.content)
+    .find(p => p.type === 'image')
+  assert.equal(imagenA.source.media_type, 'image/png')
+  assert.equal(imagenA.source.data, PNG)
+  const o = await peticion(
+    'openai',
+    'gpt-6.1-sol',
+    {
+      openai: { store: false, reasoningEffort: 'medium', forceReasoning: true },
+    },
+    'foto_latex',
+    ENTRADAS.foto_latex
+  )
+  const imagenO = o.body.input
+    .flatMap(m => m.content || [])
+    .find(p => p.type === 'input_image')
+  assert.equal(imagenO.image_url, 'data:image/png;base64,' + PNG)
+  assert.equal(o.body.store, false)
+})
+
+test('caché de proyecto: Anthropic recibe cache_control en el bloque estable; OpenAI no recibe opciones de Claude', async () => {
+  const a = await peticion(
+    'anthropic',
+    'claude-sonnet-5-5',
+    {},
+    'chat_proyecto',
+    ENTRADAS.chat_proyecto
+  )
+  assert.deepEqual(a.body.messages[0].content[0].cache_control, {
+    type: 'ephemeral',
+  })
+  assert.ok(a.body.messages[0].content[0].text.includes('<documento'))
+  const o = await peticion(
+    'openai',
+    'gpt-6.1-terra',
+    { openai: { store: false } },
+    'chat_proyecto',
+    ENTRADAS.chat_proyecto
+  )
+  assert.equal(JSON.stringify(o.body).includes('cache_control'), false)
 })

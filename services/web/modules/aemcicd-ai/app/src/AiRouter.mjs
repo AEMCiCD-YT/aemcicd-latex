@@ -47,6 +47,36 @@ export default {
       RateLimiterMiddleware.rateLimit(limiteConsultas),
       AiController.consultar
     )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/foto',
+      ...leer,
+      RateLimiterMiddleware.rateLimit(limiteConsultas),
+      AiController.consultar
+    )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/estimacion',
+      ...leer,
+      general,
+      AiController.estimar
+    )
+    webRouter.get(
+      '/project/:Project_id/aemcicd-ai/instrucciones',
+      ...leer,
+      general,
+      AiController.instrucciones
+    )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/instrucciones',
+      ...escribir,
+      general,
+      AiController.crearInstrucciones
+    )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/validar-cambio',
+      ...escribir,
+      general,
+      AiController.validarCambio
+    )
     webRouter.get(
       '/project/:Project_id/aemcicd-ai/registro',
       ...leer,
