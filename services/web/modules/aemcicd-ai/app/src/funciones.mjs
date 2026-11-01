@@ -109,7 +109,11 @@ function corregir(entrada, contexto) {
   const mensaje = texto(entrada?.mensaje, 6000, 'El mensaje del log')
   const bruto = opcional(entrada?.bruto, 20000, 'La entrada del log')
   const fragmento = contexto.fragmento
-  return `Explica y corrige este diagnóstico de compilación. Propón el cambio mínimo y los paquetes necesarios.\n${dato('log', mensaje + '\n' + bruto)}\n${fragmento ? `Archivo ${JSON.stringify(fragmento.ruta)}, desde la línea ${fragmento.primeraLinea}:\n${documentoComoDatos(fragmento)}` : 'No hay ubicación del proyecto asociada al log. Explica cómo resolverlo y devuelve cambios=[].'}`
+  const pre = contexto.preambulo
+  // El preámbulo solo se muestra aparte si no está ya dentro del fragmento.
+  const conPreambulo =
+    pre && !(pre.ruta === fragmento?.ruta && fragmento.primeraLinea === 1)
+  return `Explica y corrige este diagnóstico de compilación. Propón el cambio mínimo y los paquetes necesarios. Si falta un paquete, propón añadir \\usepackage al preámbulo como un cambio más (por ejemplo, reemplazando la línea \\documentclass por ella misma seguida del paquete).\n${dato('log', mensaje + '\n' + bruto)}\n${fragmento ? `Archivo ${JSON.stringify(fragmento.ruta)}, desde la línea ${fragmento.primeraLinea}:\n${documentoComoDatos(fragmento)}` : 'No hay ubicación del proyecto asociada al log. Explica cómo resolverlo y devuelve cambios=[].'}${conPreambulo ? `\nPreámbulo de ${JSON.stringify(pre.ruta)} (hasta \\begin{document}):\n${documentoComoDatos(pre)}` : ''}`
 }
 
 export const FUNCIONES = {

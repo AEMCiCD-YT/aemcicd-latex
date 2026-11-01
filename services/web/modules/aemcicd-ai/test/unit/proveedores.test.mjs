@@ -124,3 +124,54 @@ test('caché de proyecto: Anthropic recibe cache_control en el bloque estable; O
   )
   assert.equal(JSON.stringify(o.body).includes('cache_control'), false)
 })
+
+test('propuestas: salida estructurada nativa en ambos API, sin herramienta forzada en Claude', async () => {
+  const { Output, jsonSchema } = await import('ai')
+  const { ESQUEMA_CAMBIOS } = await import('../../app/src/cambios.mjs')
+  const salida = Output.object({
+    schema: jsonSchema(ESQUEMA_CAMBIOS),
+    name: 'propuesta_de_cambios',
+  })
+  async function cuerpo(proveedor, modelo, providerOptions) {
+    let capturado
+    const fetch = async (url, init) => {
+      capturado = JSON.parse(init.body)
+      return new Response('{"error":{"message":"prueba"}}', { status: 400 })
+    }
+    const crear = crearFabrica({ anthropic: 'a', openai: 'o' }, { fetch })
+    const r = streamText({
+      model: crear({ proveedor, modelo }),
+      messages: [{ role: 'user', content: 'x' }],
+      output: salida,
+      maxRetries: 0,
+      onError: () => {},
+      providerOptions,
+    })
+    for await (const _ of r.fullStream) {
+      // consumir
+    }
+    return capturado
+  }
+  const a = await cuerpo('anthropic', 'claude-sonnet-5-5', {
+    anthropic: { structuredOutputMode: 'outputFormat', effort: 'medium' },
+  })
+  assert.equal(a.output_config.format.type, 'json_schema')
+  assert.deepEqual(a.output_config.format.schema.required, [
+    'explicacion',
+    'cambios',
+  ])
+  assert.equal(a.output_config.effort, 'medium')
+  assert.equal(
+    a.tool_choice,
+    undefined,
+    'Claude 5.5 rechaza tool_choice forzado'
+  )
+  assert.equal(a.tools, undefined)
+  const o = await cuerpo('openai', 'gpt-6.1-sol', {
+    openai: { store: false, reasoningEffort: 'medium', forceReasoning: true },
+  })
+  assert.equal(o.text.format.type, 'json_schema')
+  assert.equal(o.text.format.strict, true)
+  assert.equal(o.text.format.schema.additionalProperties, false)
+  assert.equal(o.reasoning.effort, 'medium')
+})

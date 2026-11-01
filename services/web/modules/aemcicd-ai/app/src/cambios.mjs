@@ -70,6 +70,30 @@ export function validarSeleccionProtegida(texto, desde, hasta) {
     )
 }
 
+// Esquema de la respuesta con cambios. Se pide como salida estructurada al API (el modelo no
+// puede salirse del formato) y además se valida aquí, porque el contenido sigue siendo del modelo.
+export const ESQUEMA_CAMBIOS = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['explicacion', 'cambios'],
+  properties: {
+    explicacion: { type: 'string' },
+    cambios: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['archivo', 'antes', 'despues'],
+        properties: {
+          archivo: { type: 'string' },
+          antes: { type: 'string' },
+          despues: { type: 'string' },
+        },
+      },
+    },
+  },
+}
+
 // Los modelos a veces envuelven el JSON en ```json … ``` o añaden una frase antes, aunque se les
 // pida que no. Se acepta el primer objeto JSON del texto; el formato se valida igual de estricto.
 export function leerJson(texto) {
@@ -136,7 +160,7 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
       'La respuesta no tiene un formato de cambios válido.'
     )
   const cambios = []
-  for (const cambio of respuesta.cambios) {
+  for (let cambio of respuesta.cambios) {
     if (
       !campos(cambio, ['archivo', 'antes', 'despues']) ||
       typeof cambio.antes !== 'string' ||
@@ -162,6 +186,20 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
     let desde, hasta
     if (contexto.destino) {
       const d = contexto.destino
+      // Tolerar solo diferencias de espacios o saltos de línea al final: el modelo a veces
+      // incluye el salto de línea que sigue a la selección. Se conservan los del original.
+      if (
+        cambio.antes !== d.seleccion &&
+        d.seleccion &&
+        cambio.antes.trimEnd() === d.seleccion.trimEnd()
+      )
+        cambio = {
+          ...cambio,
+          antes: d.seleccion,
+          despues:
+            cambio.despues.trimEnd() +
+            d.seleccion.slice(d.seleccion.trimEnd().length),
+        }
       if (
         cambio.archivo !== d.ruta ||
         cambio.antes !== d.seleccion ||
@@ -197,9 +235,16 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
           'El texto original no existe o aparece varias veces. Vuelve a consultar.'
         )
       ;({ desde, hasta } = lugar)
+      const enPreambulo =
+        contexto.preambulo?.ruta === cambio.archivo &&
+        contexto.preambulo.texto.includes(cambio.antes)
       if (
         contexto.fragmento &&
-        !contexto.fragmento.texto.includes(cambio.antes)
+        !enPreambulo &&
+        !(
+          contexto.fragmento.ruta === cambio.archivo &&
+          contexto.fragmento.texto.includes(cambio.antes)
+        )
       )
         throw new ErrorEntrada(
           'El cambio queda fuera de las líneas enviadas a la IA.'

@@ -10,6 +10,18 @@ import {
 } from './precios.mjs'
 import * as saldos from './saldos.mjs'
 import { randomUUID } from 'node:crypto'
+import { Output, jsonSchema } from 'ai'
+import { ESQUEMA_CAMBIOS } from './cambios.mjs'
+
+// Salida estructurada para las funciones con propuesta: el API obliga al modelo a devolver JSON
+// con el esquema exacto. En la evaluación, Claude Sonnet 5.5 a veces respondía en Markdown pese a
+// la instrucción. En Claude se fuerza el modo nativo (outputFormat): el SDK no reconoce los
+// modelos 5.5 y usaría su alternativa jsonTool, una herramienta forzada que esos modelos
+// rechazan con un 400.
+const SALIDA_CAMBIOS = Output.object({
+  schema: jsonSchema(ESQUEMA_CAMBIOS),
+  name: 'propuesta_de_cambios',
+})
 
 // Une las opciones por proveedor sin que una pise a otra (p. ej. store y reasoningEffort).
 function combinarOpciones(...lista) {
@@ -261,9 +273,13 @@ export function crearServicio({
           abortSignal: senal,
           // Los errores se tratan abajo (fullStream); sin esto el SDK los imprime en la consola.
           onError: () => {},
+          ...(def.propuesta && { output: SALIDA_CAMBIOS }),
           providerOptions: combinarOpciones(
             // Que OpenAI no guarde las respuestas en su plataforma (Responses API).
             { openai: { store: false } },
+            def.propuesta && {
+              anthropic: { structuredOutputMode: 'outputFormat' },
+            },
             opcionesDeEsfuerzo(cand),
             opciones.providerOptions
           ),

@@ -81,6 +81,14 @@ esa misma edición. El texto original se ubica por contenido (`ubicar` en `cambi
 aparezca una sola vez. Solo una edición que cambie ese texto, o lo repita, exige repetir la
 consulta. La huella se usa únicamente para inserciones puras (`antes: ""`).
 
+Las funciones con propuesta piden **salida estructurada** al API (`ESQUEMA_CAMBIOS` en
+`cambios.mjs`): el modelo no puede responder fuera del formato. En Claude se fuerza el modo nativo
+(`structuredOutputMode: 'outputFormat'`); sin eso el SDK, que no reconoce los modelos 5.5,
+enviaría una herramienta forzada que esos modelos rechazan con un 400. «Corregir con IA» recibe
+también el preámbulo (del archivo o, si es un capítulo, del documento principal), para poder
+proponer el `\usepackage` que falta; los cambios solo pueden tocar el fragmento del error o ese
+preámbulo. En «reescribir» se tolera un salto de línea final de más en `antes`.
+
 El contenido del proyecto llega a la IA sin entidades HTML (`&` y `<` son LaTeX); solo se
 neutralizan los cierres de nuestras etiquetas de datos. Se rechaza un `despues` con entidades HTML
 nuevas (`&amp;`…), y el JSON de la respuesta se acepta también entre cercas ```json. El servidor nunca escribe una

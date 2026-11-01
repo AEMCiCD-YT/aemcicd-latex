@@ -5,11 +5,14 @@
 //   ANTHROPIC_API_KEY=… OPENAI_API_KEY=… node evaluar.mjs [modelos separados por coma]
 // o, con las claves del Key Vault: bash evaluar.sh
 import { readFile, writeFile } from 'node:fs/promises'
-import { streamText } from 'ai'
+import { streamText, Output, jsonSchema } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
 import { prepararCaso } from './preparar-caso.mjs'
-import { validarRespuesta } from '../../services/web/modules/aemcicd-ai/app/src/cambios.mjs'
+import {
+  ESQUEMA_CAMBIOS,
+  validarRespuesta,
+} from '../../services/web/modules/aemcicd-ai/app/src/cambios.mjs'
 import {
   PRECIOS_POR_DEFECTO,
   costoReal,
@@ -84,7 +87,22 @@ async function ejecutar(caso, modelo) {
       maxOutputTokens: def.maxSalida,
       maxRetries: 2,
       onError: () => {},
-      providerOptions: opciones(modelo),
+      // Igual que el servidor: las funciones con propuesta usan salida estructurada.
+      ...(def.propuesta && {
+        output: Output.object({
+          schema: jsonSchema(ESQUEMA_CAMBIOS),
+          name: 'propuesta_de_cambios',
+        }),
+      }),
+      providerOptions: def.propuesta
+        ? {
+            ...opciones(modelo),
+            anthropic: {
+              ...opciones(modelo).anthropic,
+              structuredOutputMode: 'outputFormat',
+            },
+          }
+        : opciones(modelo),
     })
     let texto = ''
     let primero

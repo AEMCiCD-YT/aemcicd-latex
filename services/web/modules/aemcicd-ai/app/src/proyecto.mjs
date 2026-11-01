@@ -50,6 +50,25 @@ export function crearLectorProyecto({
     return { proyecto, documentos, leer }
   }
 
+  async function preambulo(sesion, doc) {
+    let fuente = doc
+    if (!/\\begin\{document\}/.test(doc.texto)) {
+      const raiz = [...sesion.documentos.values()].find(
+        d => d.id === String(sesion.proyecto.rootDoc_id)
+      )
+      if (!raiz || raiz.ruta === doc.ruta) return null
+      fuente = await sesion.leer(raiz.ruta)
+    }
+    const lineas = fuente.texto.split('\n')
+    const fin = lineas.findIndex(l => /\\begin\{document\}/.test(l))
+    if (fin <= 0) return null
+    return {
+      ...fuente,
+      texto: lineas.slice(0, Math.min(fin, 150)).join('\n'),
+      primeraLinea: 1,
+    }
+  }
+
   async function preparar(projectId, nombre, entrada, limiteTokens) {
     funcion(nombre)
     const sesion = await abrir(projectId)
@@ -78,6 +97,15 @@ export function crearLectorProyecto({
           texto: lineas.slice(inicio, linea + 15).join('\n'),
           primeraLinea: inicio + 1,
         }
+        // La corrección más común es añadir un paquete: sin el preámbulo, el modelo no puede
+        // proponerlo como cambio. Se toma del mismo archivo o, si es un capítulo (\input), del
+        // documento principal. Máximo 150 líneas.
+        contexto.preambulo = await preambulo(sesion, doc)
+        if (
+          contexto.preambulo &&
+          !contexto.documentos.some(d => d.ruta === contexto.preambulo.ruta)
+        )
+          contexto.documentos.push(await sesion.leer(contexto.preambulo.ruta))
       } else {
         const { desde, hasta } = entrada
         if (

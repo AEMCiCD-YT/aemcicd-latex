@@ -466,3 +466,103 @@ test('reescritura parcial: no permite cortar una fórmula ni el argumento de una
   assert.doesNotThrow(() => validarSeleccionProtegida(texto, 0, texto.length))
   assert.deepEqual(protegidos('\\\\$x$ y \\$5'), ['\\\\', '$x$', '\\$'])
 })
+
+test('reescribir: un salto de línea final de más en «antes» se tolera y se conserva el original', async () => {
+  const r = await validarRespuesta(
+    respuesta({ ...cambio, antes: SELECCION + '\n', despues: nuevo + '\n' }),
+    CONTEXTO,
+    sesion,
+    'reescribir'
+  )
+  assert.equal(r.cambios[0].antes, SELECCION)
+  assert.equal(r.cambios[0].despues, nuevo)
+  await assert.rejects(
+    validarRespuesta(
+      respuesta({ ...cambio, antes: SELECCION + ' y más', despues: nuevo }),
+      CONTEXTO,
+      sesion,
+      'reescribir'
+    ),
+    /fuera de la selección/
+  )
+})
+
+test('corregir: incluye el preámbulo (del archivo o del principal) y acepta añadir un paquete', async () => {
+  const principal = [
+    '\\documentclass{article}',
+    '\\usepackage{graphicx}',
+    '\\begin{document}',
+    '\\input{cap1}',
+    '\\end{document}',
+  ].join('\n')
+  const capitulo = Array.from({ length: 40 }, (_, i) =>
+    i === 30 ? 'La recta real es $\\mathbb{R}$.' : `Línea ${i + 1}.`
+  ).join('\n')
+  const textos = { 'main.tex': principal, 'cap1.tex': capitulo }
+  const ids = { 'main.tex': 'm', 'cap1.tex': 'c' }
+  const lector = crearLectorProyecto({
+    obtenerProyecto: async () => ({
+      rootDoc_id: 'm',
+      rootFolder: [
+        {
+          docs: Object.keys(textos).map(n => ({ _id: ids[n], name: n })),
+          folders: [],
+        },
+      ],
+    }),
+    obtenerDocumento: async (_, id) => ({
+      lines: textos[Object.keys(ids).find(n => ids[n] === id)].split('\n'),
+      version: 1,
+    }),
+  })
+  const ctx = await lector.preparar(
+    'p',
+    'corregir_error',
+    { mensaje: 'Undefined control sequence', archivo: 'cap1.tex', linea: 31 },
+    150000
+  )
+  assert.equal(ctx.preambulo.ruta, 'main.tex')
+  assert.ok(ctx.preambulo.texto.includes('\\usepackage{graphicx}'))
+  assert.ok(!ctx.preambulo.texto.includes('\\input'))
+  const p = funcion('corregir_error').preparar(
+    { mensaje: 'Undefined control sequence' },
+    ctx
+  )
+  assert.ok(JSON.stringify(p.mensajes).includes('Preámbulo de \\"main.tex\\"'))
+  const ses = await lector.abrir('p')
+  const v = await validarRespuesta(
+    JSON.stringify({
+      explicacion: 'Falta amssymb.',
+      cambios: [
+        {
+          archivo: 'main.tex',
+          antes: '\\usepackage{graphicx}',
+          despues: '\\usepackage{graphicx}\n\\usepackage{amssymb}',
+        },
+      ],
+    }),
+    ctx,
+    ses,
+    'corregir_error'
+  )
+  assert.equal(v.cambios[0].archivo, 'main.tex')
+  // Fuera del fragmento y del preámbulo sigue sin permitirse.
+  await assert.rejects(
+    validarRespuesta(
+      JSON.stringify({
+        explicacion: 'x',
+        cambios: [
+          {
+            archivo: 'main.tex',
+            antes: '\\input{cap1}',
+            despues: '\\input{cap2}',
+          },
+        ],
+      }),
+      ctx,
+      ses,
+      'corregir_error'
+    ),
+    /fuera de las líneas/
+  )
+})

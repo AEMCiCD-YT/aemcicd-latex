@@ -495,5 +495,20 @@
     "archivos": {
       "main.tex": "Cuando $x<1$ la serie converge & eso lo vimos en clase."
     }
+  },
+  {
+    "id": "fase1-paquete-en-preambulo",
+    "tipo": "fase1",
+    "funcion": "corregir_error",
+    "entrada": {
+      "mensaje": "Undefined control sequence",
+      "bruto": "! Undefined control sequence.\nl.21 La recta real es $\\mathbb\n                             {R}$ y los naturales",
+      "archivo": "cap1.tex",
+      "linea": 21
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage[spanish]{babel}\n\\usepackage{graphicx}\n\\begin{document}\n\\input{cap1}\n\\end{document}",
+      "cap1.tex": "Texto del capítulo, línea 1.\nTexto del capítulo, línea 2.\nTexto del capítulo, línea 3.\nTexto del capítulo, línea 4.\nTexto del capítulo, línea 5.\nTexto del capítulo, línea 6.\nTexto del capítulo, línea 7.\nTexto del capítulo, línea 8.\nTexto del capítulo, línea 9.\nTexto del capítulo, línea 10.\nTexto del capítulo, línea 11.\nTexto del capítulo, línea 12.\nTexto del capítulo, línea 13.\nTexto del capítulo, línea 14.\nTexto del capítulo, línea 15.\nTexto del capítulo, línea 16.\nTexto del capítulo, línea 17.\nTexto del capítulo, línea 18.\nTexto del capítulo, línea 19.\nTexto del capítulo, línea 20.\nLa recta real es $\\mathbb{R}$ y los naturales $\\mathbb{N}$.\nTexto del capítulo, línea 22.\nTexto del capítulo, línea 23.\nTexto del capítulo, línea 24.\nTexto del capítulo, línea 25.\nTexto del capítulo, línea 26.\nTexto del capítulo, línea 27.\nTexto del capítulo, línea 28.\nTexto del capítulo, línea 29.\nTexto del capítulo, línea 30."
+    }
   }
 ]
