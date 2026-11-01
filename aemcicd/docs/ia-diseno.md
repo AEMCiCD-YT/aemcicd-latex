@@ -211,6 +211,12 @@ Resultado de la evaluación (20 casos, misma instrucción que el servidor, esfue
 | Claude Sonnet 5.5 | $0,0081 | Ninguno; respuestas más completas, pero cinco veces más caras que Terra y un diagrama cortado |
 | GPT-6.1 Sol | $0,0028 | Sistema de ecuaciones con `cases` y `&=`, que no alinea como dice |
 
+Segunda ronda con el esfuerzo ajustado (Terra y Haiku bajo, Sonnet y Sol medio): ninguna
+respuesta cortada, Terra bajó a $0,0011 por consulta y responde en 1 segundo en lugar de 2,4.
+Persistían dos imprecisiones por no conocer el servidor (pedir que se «seleccione Biber» y nombrar
+los menús en inglés) y Haiku usó una librería de TikZ sin cargarla; las instrucciones ahora
+describen el servidor y exigen código que compile tal cual.
+
 Por eso el nivel rápido pasa de Luna a Terra: cuesta ocho veces más, pero sigue en unos $0,32
 por estudiante al mes con 200 consultas, y la función más usada (corregir errores) no puede
 proponer arreglos que no compilan. El límite de salida sube de 1500 a 4000 tokens.
