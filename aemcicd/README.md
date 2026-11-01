@@ -18,6 +18,8 @@ El código modificado se publica aquí, como pide la AGPL, y el pie de página d
 Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se configuran en
 `latex-server/personalizacion/variables.env`, no aquí.
 
+En preparación: asistente de IA en el editor. Diseño en [`aemcicd/docs/ia-diseno.md`](docs/ia-diseno.md).
+
 ## Imagen
 
 `aemcicd/Dockerfile` parte de la imagen publicada de Extended CE (`BASE`) y le copia encima los cambios. Luego
