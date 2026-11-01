@@ -14,11 +14,18 @@ El código modificado se publica aquí, como pide la AGPL, y el pie de página d
 | Colores de la asociación: acento rojo oscuro (contraste 5:1 con blanco) y enlaces en el azul de la marca | `frontend/stylesheets/foundations/colors.scss`, `components/nav.scss`, `components/tabs.scss`, `components/radio-chip.scss`, `abstracts/mixins.scss` |
 | Logo y favicons de la AEMCiCD | `services/web/public/img/aemcicd/`, `services/web/public/favicon*`, `apple-touch-icon.png` |
 | Aviso para cuentas suspendidas, configurable (`OVERLEAF_SUSPENDED_ACCOUNT_TEXT`) | `server-ce/config/settings.js`, `UserPagesController.mjs`, `views/user/accountSuspended.pug` |
+| Asistente de IA (módulo `aemcicd-ai`), con la dependencia `@ai-sdk/anthropic` y la variable `aemcicdAiEnabled` | `services/web/modules/aemcicd-ai/`, `config/settings.defaults.js`, `ExpressLocals.mjs`, `types/exposed-settings.ts`, `package.json`, `yarn.lock` |
+| El envío de correo ya no escribe la configuración SMTP (con la contraseña) en el log | `app/src/Features/Email/EmailSender.mjs` |
 
 Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se configuran en
 `latex-server/personalizacion/variables.env`, no aquí.
 
-En preparación: asistente de IA en el editor. Diseño en [`aemcicd/docs/ia-diseno.md`](docs/ia-diseno.md).
+## Asistente de IA
+
+Módulo propio `services/web/modules/aemcicd-ai` (fase base: crédito, dos proveedores, medición y
+panel en el editor). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
+diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
+[`ia-eval/`](ia-eval/README.md).
 
 ## Imagen
 

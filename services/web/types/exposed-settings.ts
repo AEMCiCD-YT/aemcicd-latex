@@ -56,5 +56,6 @@ export type ExposedSettings = {
   linkedInInsightsPartnerId?: string
   githubSyncEnabled: boolean
   zoteroEnabled: boolean
+  aemcicdAiEnabled?: boolean
   enablePandocConversions: boolean
 }
