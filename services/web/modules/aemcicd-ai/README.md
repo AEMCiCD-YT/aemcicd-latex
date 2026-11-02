@@ -1,7 +1,7 @@
 # aemcicd-ai: asistente de IA de LaTeX AEMCiCD
 
 Módulo propio del fork. El diseño completo está en [`aemcicd/docs/ia-diseno.md`](../../../../aemcicd/docs/ia-diseno.md).
-Este módulo contiene la **fase base** y la **fase 1** (implementada para revisión; no implica despliegue):
+Este módulo contiene la **fase base**, la **fase 1** y la **fase 2** (código para revisión; no implica despliegue):
 
 - conexión con Claude y OpenAI solo desde el servidor (`app/src/proveedores.mjs`);
 - enrutador por nivel, con cambio automático al otro proveedor (`enrutador.mjs`, `servicio.mjs`);
@@ -46,6 +46,64 @@ páginas. El servidor comprueba firma de PNG/JPEG/WebP, dimensiones, base64 y l�
 sin confiar en el MIME ni en el nombre recibido. Solo `/foto` usa un parser JSON de 7 MiB para
 admitir el base64; los demás límites de Express permanecen intactos. La imagen se envía como
 bloque de imagen del AI SDK. No se guarda en archivos, eventos ni Mongo.
+
+## Fase 2: revisión, gráficas y plataforma
+
+| Función               | Nivel       | Acceso                                                                                                |
+| --------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `revisor_jurado`      | `proyecto`  | Revisión y entrega › Revisor tipo jurado; cada observación se publica al pulsar «Añadir al margen»    |
+| `revisar_entrega`     | `rapido`    | Revisión y entrega › Revisar antes de entregar; lista de chequeo y propuestas de ortografía/gramática |
+| `revisar_importacion` | `proyecto`  | Revisión y entrega › Revisar importación, después de importar y recompilar                            |
+| `grafica_datos`       | `escritura` | Gráfica desde datos; datos pegados o ruta CSV/TSV/TXT del proyecto                                    |
+| `soporte`             | `rapido`    | Plataforma `/latex#soporte`, enlazada desde el editor                                                 |
+
+Las tres revisiones leen el proyecto completo en el servidor, con etiquetas de datos, límite sin
+recortes silenciosos y caché de Anthropic. Exigen aceptar la estimación antes de consultar, incluso
+la revisión rápida. El soporte usa solo una base de ayuda pública: no recibe el proyecto, sus
+instrucciones ni datos privados de cuentas. Todas las llamadas pasan por `servicio.consultar()`.
+
+Las propuestas muestran **Enviar a revisión**. El contenedor del editor activa temporalmente el
+seguimiento nativo con la identidad real del solicitante y conserva esa identidad hasta enviar las
+operaciones pendientes. Restaura después la última elección del interruptor de seguimiento. Cada
+cambio mantiene su aceptación/rechazo individual en Control de cambios; un comentario nativo
+indica **«IA, pedido por …»**. No se inventan usuarios robot ni se fuerza una identidad que el
+servidor rechazaría. Se admiten comentarios legacy y history-ot. Publicar un comentario requiere
+permiso de comentar; proponer cambios requiere escritura y seguimiento. Si falla la identificación,
+la propuesta sigue en revisión y el panel muestra un aviso.
+
+El jurado devuelve JSON estricto `{explicacion, comentarios: [{archivo, cita, comentario}]}` (máximo
+12). El servidor comprueba pertenencia, ruta, cita literal y única y contenido actual, también al
+publicarla. No se publican observaciones automáticamente ni se guardan respuestas en eventos.
+
+Las gráficas devuelven JSON estricto `{explicacion, script}`. El servidor antepone los datos
+originales, estilo Matplotlib y `ruta_pdf`; el nombre deriva del evento propio de `grafica_datos`:
+`graficas/grafica-EVENTO.py` y `.pdf`. Guardar crea el documento por `EditorController`, sin
+sobrescribir scripts modificados. La ejecución es otro clic y reutiliza **PythonExecutionProvider**
+y el ejecutor Pyodide de Extended CE, que sube sus resultados al proyecto. El filtro estático de
+código rechaza patrones obvios de red/ejecución dinámica; **no es un aislamiento completo**. Revisa
+el script, columnas, ajuste, incertidumbres y unidades antes de ejecutarlo. El panel no promete
+que cualquier script generado vaya a funcionar.
+
+Nuevo proyecto ofrece **Importar desde Prism (ZIP)** y la opción nativa **Documento Word**. Prism reutiliza la
+subida ZIP nativa; Word, la conversión DOCX de CLSI con su validación, permisos y limpieza. El archivo importado se abre antes de cualquier consulta de IA:
+recompila y pide «Revisar importación». La imagen del fork instala Pandoc y ZIP, ausentes en la base, y establece `ENABLE_PANDOC_CONVERSIONS=true` para el conversor nativo de CLSI. Puedes sobrescribirlo al ejecutar la imagen; también habilita las conversiones nativas que controla esa variable. No se modifica `latex-server`.
+
+**Registro de uso › Generar declaración** produce una sección LaTeX determinista (sin costo ni
+modelo), delimitada por `% AEMCICD-IA-DECLARACION-INICIO` / `-FIN`. Se valida de nuevo contra el
+registro y documento actuales antes de aplicar. Puedes actualizarla, retirarla o editarla como texto
+normal. El aviso de responsabilidad aparece en el panel y al quitar la marca desde CodeMirror.
+El registro incluye envíos a revisión, comentarios publicados y scripts guardados: **no certifica
+la aceptación final ni su presencia en la versión entregada**. Retirar la sección no borra el registro.
+
+La plataforma se implementa en el PR complementario de `AEMCiCD-YT/aemcicd-platform`:
+soporte con la sesión LaTeX del estudiante y panel agregado `/programa-latex/ia`. Solo se concede
+CORS con credenciales a `https://plataforma.aemcicd.org` para soporte, sesión de soporte y resumen.
+Se agrega ese origen a la comprobación global de Overleaf; los POST conservan CSRF y las demás
+rutas no obtienen permisos CORS. El resumen exige administrador del servidor; la plataforma exige
+además permisos de lectura/gestión del programa. No transmite documentos ni identificadores de
+usuarios/proyectos. Puede traerse con un clic del administrador o cargarse como JSON de
+`ia-resumen`; la ampliación automática de `latex-sync` queda pendiente de autorización porque vive
+en `latex-server`, que se mantiene intacto.
 
 ## Propuestas verificables
 
@@ -120,6 +178,8 @@ aplicación; se informa el costo real de la consulta ya realizada. No se conserv
 
 En el servidor, las claves vienen del Key Vault y el resto de `latex-server/personalizacion/variables.env`.
 
+La imagen del fork activa `ENABLE_PANDOC_CONVERSIONS=true` e instala Pandoc y ZIP para la conversión nativa de Word. Sobrescribir esa variable con `false` desactiva esas conversiones y sus menús; no desactiva el asistente de IA.
+
 ## Rutas
 
 | Ruta                                             | Permiso                                                                                        |
@@ -132,9 +192,20 @@ En el servidor, las claves vienen del Key Vault y el resto de `latex-server/pers
 | `POST /project/:id/aemcicd-ai/estimacion`        | leer el proyecto; no llama al modelo ni cobra; devuelve tokens, modelos y cota en microdólares |
 | `GET /project/:id/aemcicd-ai/instrucciones`      | leer el proyecto; informa si existe el archivo                                                 |
 | `POST /project/:id/aemcicd-ai/instrucciones`     | escribir; crea la plantilla si no existe                                                       |
-| `POST /project/:id/aemcicd-ai/validar-cambio`    | escribir; comprueba evento propio y ubica el texto en el documento actual, sin modificarlo      |
+| `POST /project/:id/aemcicd-ai/validar-cambio`    | escribir; comprueba evento propio y ubica el texto en el documento actual, sin modificarlo     |
 | `GET /project/:id/aemcicd-ai/registro`           | leer el proyecto                                                                               |
 | `POST`/`DELETE /project/:id/aemcicd-ai/registro` | escribir en el proyecto                                                                        |
+
+Rutas adicionales de fase 2:
+
+| Ruta                                              | Permisos y resultado                                                        |
+| ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `POST /project/:id/aemcicd-ai/validar-comentario` | escribir; evento propio, cita actual del proyecto; no publica               |
+| `POST /project/:id/aemcicd-ai/grafica`            | escribir; evento propio de gráfica, crea script y registra ruta; no ejecuta |
+| `POST /project/:id/aemcicd-ai/declaracion`        | escribir; prepara inserción/actualización/retirada, sin modificar documento |
+| `GET /aemcicd-ai/soporte/sesion`                  | sesión; estado, saldo y token CSRF; `no-store`                              |
+| `POST /aemcicd-ai/soporte`                        | sesión y activación; crédito común, 12/min, CSRF                            |
+| `GET /aemcicd-ai/resumen?mes=AAAA-MM`             | administrador; totales de `ia-resumen`, sin contenido ni identificadores    |
 
 ## Datos en Mongo
 

@@ -510,5 +510,161 @@
       "main.tex": "\\documentclass{article}\n\\usepackage[spanish]{babel}\n\\usepackage{graphicx}\n\\begin{document}\n\\input{cap1}\n\\end{document}",
       "cap1.tex": "Texto del capítulo, línea 1.\nTexto del capítulo, línea 2.\nTexto del capítulo, línea 3.\nTexto del capítulo, línea 4.\nTexto del capítulo, línea 5.\nTexto del capítulo, línea 6.\nTexto del capítulo, línea 7.\nTexto del capítulo, línea 8.\nTexto del capítulo, línea 9.\nTexto del capítulo, línea 10.\nTexto del capítulo, línea 11.\nTexto del capítulo, línea 12.\nTexto del capítulo, línea 13.\nTexto del capítulo, línea 14.\nTexto del capítulo, línea 15.\nTexto del capítulo, línea 16.\nTexto del capítulo, línea 17.\nTexto del capítulo, línea 18.\nTexto del capítulo, línea 19.\nTexto del capítulo, línea 20.\nLa recta real es $\\mathbb{R}$ y los naturales $\\mathbb{N}$.\nTexto del capítulo, línea 22.\nTexto del capítulo, línea 23.\nTexto del capítulo, línea 24.\nTexto del capítulo, línea 25.\nTexto del capítulo, línea 26.\nTexto del capítulo, línea 27.\nTexto del capítulo, línea 28.\nTexto del capítulo, línea 29.\nTexto del capítulo, línea 30."
     }
+  },
+  {
+    "id": "fase2-revisor_jurado-1",
+    "tipo": "fase2",
+    "funcion": "revisor_jurado",
+    "entrada": {
+      "pregunta": "Señala limitaciones metodológicas sin inventar datos ni referencias."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisor_jurado-2",
+    "tipo": "fase2",
+    "funcion": "revisor_jurado",
+    "entrada": {
+      "pregunta": "Revisa si las conclusiones están respaldadas por los resultados."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisor_jurado-3",
+    "tipo": "fase2",
+    "funcion": "revisor_jurado",
+    "entrada": {
+      "pregunta": "Comenta claridad y estructura; cada cita debe ser literal y única."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_entrega-1",
+    "tipo": "fase2",
+    "funcion": "revisar_entrega",
+    "entrada": {
+      "pregunta": "Corrige ortografía conservando ecuaciones, comandos y referencias."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_entrega-2",
+    "tipo": "fase2",
+    "funcion": "revisar_entrega",
+    "entrada": {
+      "pregunta": "Lista lo que falta revisar antes de entregar; no inventes resultados."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_entrega-3",
+    "tipo": "fase2",
+    "funcion": "revisar_entrega",
+    "entrada": {
+      "pregunta": "Revisa gramática en inglés y español sin alterar la notación."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_importacion-1",
+    "tipo": "fase2",
+    "funcion": "revisar_importacion",
+    "entrada": {
+      "pregunta": "Revisa los errores de esta exportación de Word antes de recompilar."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_importacion-2",
+    "tipo": "fase2",
+    "funcion": "revisar_importacion",
+    "entrada": {
+      "pregunta": "Revisa un ZIP importado desde Prism: comprueba figuras y bibliografía."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\includegraphics{figura_ausente}\n\\bibliography{referencias}\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-revisar_importacion-3",
+    "tipo": "fase2",
+    "funcion": "revisar_importacion",
+    "entrada": {
+      "pregunta": "Detecta comandos incompatibles sin inventar archivos ausentes."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Método}\nSe midió la absorbancia de tres muestras una sola vez. No se registró la temperatura. La concentración estimada fue $c=2$ mM.\\label{sec:metodo}\n\\section{Resultados}\nLos resultado muestra una diferencia significativa, sin indicar una prueba estadística. Véase la sección \\ref{sec:metodo}.\n\\end{document}"
+    }
+  },
+  {
+    "id": "fase2-grafica_datos-1",
+    "tipo": "fase2",
+    "funcion": "grafica_datos",
+    "entrada": {
+      "pregunta": "Dibuja absorbancia vs concentración con ajuste lineal, unidades y R².",
+      "seleccion": "concentracion_mM,absorbancia\n0,0.002\n0.5,0.121\n1,0.247\n1.5,0.368\n2,0.489"
+    },
+    "archivos": {}
+  },
+  {
+    "id": "fase2-grafica_datos-2",
+    "tipo": "fase2",
+    "funcion": "grafica_datos",
+    "entrada": {
+      "pregunta": "Ajusta un modelo exponencial e indica si los datos son insuficientes.",
+      "seleccion": "concentracion_mM,absorbancia\n0,0.002\n0.5,0.121\n1,0.247\n1.5,0.368\n2,0.489"
+    },
+    "archivos": {}
+  },
+  {
+    "id": "fase2-grafica_datos-3",
+    "tipo": "fase2",
+    "funcion": "grafica_datos",
+    "entrada": {
+      "pregunta": "Grafica un espectro y detecta picos sin inventar mediciones.",
+      "seleccion": "concentracion_mM,absorbancia\n0,0.002\n0.5,0.121\n1,0.247\n1.5,0.368\n2,0.489"
+    },
+    "archivos": {}
+  },
+  {
+    "id": "fase2-soporte-1",
+    "tipo": "fase2",
+    "funcion": "soporte",
+    "entrada": {
+      "pregunta": "¿Cómo reviso el saldo del Asistente de IA?"
+    },
+    "archivos": {}
+  },
+  {
+    "id": "fase2-soporte-2",
+    "tipo": "fase2",
+    "funcion": "soporte",
+    "entrada": {
+      "pregunta": "No puedo entrar al editor. ¿Dónde pido ayuda sin enviar contraseñas?"
+    },
+    "archivos": {}
+  },
+  {
+    "id": "fase2-soporte-3",
+    "tipo": "fase2",
+    "funcion": "soporte",
+    "entrada": {
+      "pregunta": "¿Dónde encuentro los pasos y términos del programa?"
+    },
+    "archivos": {}
   }
 ]

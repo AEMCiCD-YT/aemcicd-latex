@@ -104,6 +104,12 @@ capturas y comandos reproducibles se documentan en `services/web/modules/aemcicd
 
 ### Fase 2: antes del 1 de enero (diciembre)
 
+**Implementada para revisión en `ia-fase-2`**, con plataforma en PR complementario. No implica
+publicación ni despliegue. Evidencia y límites en [la comprobación de fase 2](ia-fase-2/verificacion.md).
+La sincronización automática del resumen mediante `latex-sync` requiere un cambio aparte en
+`latex-server`; mientras ese repositorio siga fuera del alcance, se usa la consulta administradora
+desde la plataforma o la carga de `ia-resumen`.
+
 - **Cambios con seguimiento** (área 2): la IA propone sus cambios como cambios con seguimiento
   del módulo `track-changes`; el estudiante y sus compañeros los aceptan o rechazan uno por uno.
 - **Revisión académica** (área 3): revisor tipo jurado con comentarios en el margen; ortografía y
@@ -113,6 +119,20 @@ capturas y comandos reproducibles se documentan en `services/web/modules/aemcicd
 - **Declaración de uso de IA** (área 9): ver la sección 8.
 - **Asistente de soporte** (área 12): en `plataforma.aemcicd.org/latex` y en el panel del editor.
 - **Gráficas estilo Origin** (sección 7).
+
+Implementación: los parches conservan el formato estricto de la fase 1, pero se envían como
+operaciones colaborativas con seguimiento nativo y comentario «IA, pedido por …». La identidad
+OT es la del estudiante real. No se inventa un autor robot. Cada cambio se acepta/rechaza por
+separado en el Panel de revisión. Las observaciones del jurado usan
+`{explicacion, comentarios:[{archivo,cita,comentario}]}`; la cita debe ser literal, única y vigente.
+Las gráficas usan `{explicacion,script}`; el servidor antepone datos originales y ruta derivada del
+evento. Guardar el script y ejecutarlo son acciones distintas del estudiante.
+
+La declaración es determinista, delimitada por `% AEMCICD-IA-DECLARACION-INICIO` y
+`% AEMCICD-IA-DECLARACION-FIN`. Se propone, valida y aplica por el editor. El registro refleja
+propuestas enviadas a revisión, observaciones publicadas y scripts guardados; no conoce su
+aceptación posterior ni certifica que estén en la versión final. La declaración lo explica y pide
+ajustarla a los usos efectivamente incorporados.
 
 ### Fase 3: próximo semestre (enero y febrero)
 
