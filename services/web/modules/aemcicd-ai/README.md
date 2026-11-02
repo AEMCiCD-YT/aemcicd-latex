@@ -1,7 +1,7 @@
 # aemcicd-ai: asistente de IA de LaTeX AEMCiCD
 
 Módulo propio del fork. El diseño completo está en [`aemcicd/docs/ia-diseno.md`](../../../../aemcicd/docs/ia-diseno.md).
-Este módulo contiene la **fase base**, la **fase 1** y la **fase 2** (código para revisión; no implica despliegue):
+Este módulo contiene la **fase base**, la **fase 1** y la **fase 2** (desplegadas en producción; [evidencia y límites](../../../../aemcicd/docs/ia-fase-2/despliegue.md)):
 
 - conexión con Claude y OpenAI solo desde el servidor (`app/src/proveedores.mjs`);
 - enrutador por nivel, con cambio automático al otro proveedor (`enrutador.mjs`, `servicio.mjs`);
@@ -86,7 +86,7 @@ que cualquier script generado vaya a funcionar.
 
 Nuevo proyecto ofrece **Importar desde Prism (ZIP)** y la opción nativa **Documento Word**. Prism reutiliza la
 subida ZIP nativa; Word, la conversión DOCX de CLSI con su validación, permisos y limpieza. El archivo importado se abre antes de cualquier consulta de IA:
-recompila y pide «Revisar importación». La imagen del fork instala Pandoc y ZIP, ausentes en la base, y establece `ENABLE_PANDOC_CONVERSIONS=true` para el conversor nativo de CLSI. Puedes sobrescribirlo al ejecutar la imagen; también habilita las conversiones nativas que controla esa variable. No se modifica `latex-server`.
+recompila y pide «Revisar importación». La imagen del fork instala Pandoc y ZIP, ausentes en la base, y establece `ENABLE_PANDOC_CONVERSIONS=true` para el conversor nativo de CLSI. Puedes sobrescribirlo al ejecutar la imagen; también habilita las conversiones nativas que controla esa variable. En producción, `latex-server` fija esta misma imagen para Pandoc y configura el grupo de conversiones sin el init de Overleaf, manteniendo su aislamiento.
 
 **Registro de uso › Generar declaración** produce una sección LaTeX determinista (sin costo ni
 modelo), delimitada por `% AEMCICD-IA-DECLARACION-INICIO` / `-FIN`. Se valida de nuevo contra el
@@ -95,15 +95,19 @@ normal. El aviso de responsabilidad aparece en el panel y al quitar la marca des
 El registro incluye envíos a revisión, comentarios publicados y scripts guardados: **no certifica
 la aceptación final ni su presencia en la versión entregada**. Retirar la sección no borra el registro.
 
-La plataforma se implementa en el PR complementario de `AEMCiCD-YT/aemcicd-platform`:
+La plataforma está desplegada desde el [PR #79](https://github.com/AEMCiCD-YT/aemcicd-platform/pull/79):
 soporte con la sesión LaTeX del estudiante y panel agregado `/programa-latex/ia`. Solo se concede
 CORS con credenciales a `https://plataforma.aemcicd.org` para soporte, sesión de soporte y resumen.
 Se agrega ese origen a la comprobación global de Overleaf; los POST conservan CSRF y las demás
 rutas no obtienen permisos CORS. El resumen exige administrador del servidor; la plataforma exige
 además permisos de lectura/gestión del programa. No transmite documentos ni identificadores de
 usuarios/proyectos. Puede traerse con un clic del administrador o cargarse como JSON de
-`ia-resumen`; la ampliación automática de `latex-sync` queda pendiente de autorización porque vive
-en `latex-server`, que se mantiene intacto.
+`ia-resumen`. Además, `latex-sync` envía automáticamente los totales del mes actual y del
+anterior cada cinco minutos aproximadamente, por HTTPS y con su token existente. El conector
+se implementó y desplegó en `latex-server`; la plataforma confirmó ambos meses en producción.
+La IA permanece habilitada para estudiantes mediante `AEMCICD_AI_ENABLED=true` y
+`AEMCICD_AI_ONLY_ADMINS=false`, conservados en la configuración versionada de `latex-server`.
+Cada estudiante debe activarla en su panel antes de consultar.
 
 ## Propuestas verificables
 

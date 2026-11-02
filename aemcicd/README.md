@@ -29,10 +29,12 @@ Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se
 ## Asistente de IA
 
 Módulo propio `services/web/modules/aemcicd-ai` (fase base: crédito, dos proveedores, medición y
-panel en el editor; fase 1 implementada para revisión: diagnósticos, escritura, visión, contexto
+panel en el editor; fase 1 desplegada: diagnósticos, escritura, visión, contexto
 del proyecto, instrucciones y propuestas aplicables; fase 2: seguimiento, revisión, importación,
 declaración y gráficas, con soporte y panel agregado en la plataforma). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
-diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
+Estado: base y fases 1 y 2 en producción, IA disponible para estudiantes con activación individual;
+fase 3 planificada. [Despliegue y límites de verificación](docs/ia-fase-2/despliegue.md).
+Diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
 [`ia-eval/`](ia-eval/README.md).
 
 ## Imagen
