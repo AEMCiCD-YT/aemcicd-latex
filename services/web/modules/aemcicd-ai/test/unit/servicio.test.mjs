@@ -8,6 +8,7 @@ import { aMicro } from '../../app/src/precios.mjs'
 import * as saldos from '../../app/src/saldos.mjs'
 import { crearServicio, ErrorIA } from '../../app/src/servicio.mjs'
 import { ENTRADAS, CONTEXTO } from './casos-fase1.mjs'
+import { ENTRADAS_FASE2 } from './casos-fase2.mjs'
 import {
   conectar,
   desconectar,
@@ -316,7 +317,10 @@ test('resumen mensual: solo totales, sin identificadores', async () => {
   assert.equal(texto.includes(String(a)) || texto.includes(String(b)), false)
 })
 
-for (const [funcion, entrada] of Object.entries(ENTRADAS)) {
+for (const [funcion, entrada] of Object.entries({
+  ...ENTRADAS,
+  ...ENTRADAS_FASE2,
+})) {
   test(`${funcion}: cobra el uso real y no guarda documentos, instrucciones, preguntas, imágenes ni respuestas`, async () => {
     const userId = new ObjectId(),
       projectId = new ObjectId()
@@ -382,6 +386,14 @@ for (const [funcion, entrada] of Object.entries(ENTRADAS)) {
         'no debe persistir contenido'
       )
     assert.equal(await s.eventoPropio(userId, projectId, r.eventoId), true)
+    assert.equal(
+      await s.eventoPropio(userId, projectId, r.eventoId, funcion),
+      true
+    )
+    assert.equal(
+      await s.eventoPropio(userId, projectId, r.eventoId, 'funcion_ajena'),
+      false
+    )
     assert.equal(
       await s.eventoPropio(userId, new ObjectId(), r.eventoId),
       false

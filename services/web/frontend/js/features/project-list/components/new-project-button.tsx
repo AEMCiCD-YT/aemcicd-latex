@@ -25,6 +25,13 @@ import { useProjectListContext } from '@/features/project-list/context/project-l
 import { NestableDropdownContextProvider } from '@/shared/context/nestable-dropdown-context'
 import { NestedMenuBarDropdown } from '@/shared/components/menu-bar/menu-bar-dropdown'
 
+const additionalImportMenus = importOverleafModules(
+  'projectImportMenuComponents'
+) as {
+  import: { default: JSXElementConstructor<Record<string, never>> }
+  path: string
+}[]
+
 type SendTrackingEvent = {
   dropdownMenu: string
   dropdownOpen: boolean
@@ -207,6 +214,9 @@ function NewProjectButton({
             <OLDropdownHeader aria-hidden="true">
               {t('import')}
             </OLDropdownHeader>
+            {additionalImportMenus.map(({ import: { default: Component }, path }) => (
+              <Component key={path} />
+            ))}
             <li role="none">
               <OLDropdownItem
                 onClick={e =>

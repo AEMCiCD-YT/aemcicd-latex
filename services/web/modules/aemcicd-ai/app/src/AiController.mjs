@@ -5,9 +5,12 @@ import { contexto } from './contexto.mjs'
 import { ErrorEntrada, funcion as definicion } from './funciones.mjs'
 import { ErrorIA } from './servicio.mjs'
 import { aUsd } from './precios.mjs'
-import { lectorProyecto } from './overleaf.mjs'
+import { lectorProyecto, guardarGrafica } from './overleaf.mjs'
 import { validarRespuesta, verificarCambio } from './cambios.mjs'
 import { rutaSegura } from './datos.mjs'
+import { validarComentarios, validarGrafica, textoFase2 } from './fase2.mjs'
+import { prepararDeclaracion, AVISO_DECLARACION } from './declaracion.mjs'
+import { resumenMensual } from './resumen.mjs'
 
 // Versión del aviso de IA que el estudiante acepta al activar (cambia si cambian los términos).
 export const VERSION_AVISO = '2026-11'
@@ -117,22 +120,42 @@ async function consultar(req, res) {
       preferir: preferir === 'alternativa' ? 'alternativa' : undefined,
       senal: control.signal,
       alEscribir: texto => {
-        if (def.propuesta) textoPropuesta += texto
+        if (def.propuesta || def.respuesta) textoPropuesta += texto
         else linea({ tipo: 'texto', texto })
       },
     })
     let propuesta = {}
-    if (def.propuesta) {
+    if (def.propuesta || def.respuesta) {
       try {
-        propuesta = await validarRespuesta(
-          textoPropuesta,
-          contextoProyecto,
-          await lectorProyecto.abrir(projectId),
-          funcion
-        )
+        if (def.respuesta === 'comentarios')
+          propuesta = await validarComentarios(
+            textoPropuesta,
+            contextoProyecto,
+            await lectorProyecto.abrir(projectId)
+          )
+        else if (def.respuesta === 'grafica')
+          propuesta = validarGrafica(
+            textoPropuesta,
+            contextoProyecto.datosGrafica ?? entrada?.seleccion,
+            String(r.eventoId)
+          )
+        else
+          propuesta = await validarRespuesta(
+            textoPropuesta,
+            contextoProyecto,
+            await lectorProyecto.abrir(projectId),
+            funcion,
+            { agrupar: false }
+          )
       } catch (err) {
-        if (!(err instanceof ErrorEntrada)) throw err
-        propuesta = { explicacion: '', cambios: [], aviso: err.message }
+        propuesta = {
+          explicacion: '',
+          cambios: [],
+          aviso:
+            err instanceof ErrorEntrada
+              ? err.message
+              : 'No se pudo verificar la propuesta. Vuelve a intentarlo; el costo mostrado corresponde a la consulta realizada.',
+        }
       }
     }
     linea({
@@ -171,17 +194,18 @@ async function estimar(req, res) {
   const e = await servicio.estado(usuario(req))
   if (!e.activada)
     return res.status(403).json({ mensaje: 'Activa la IA para usarla.' })
-  if (req.body?.funcion !== 'chat_proyecto')
+  const nombre = req.body?.funcion
+  if (nombre !== 'chat_proyecto' && !definicion(nombre).usaProyecto)
     throw new ErrorEntrada('Solo se estima la consulta del proyecto completo.')
   const contextoProyecto = await lectorProyecto.preparar(
     new ObjectId(req.params.Project_id),
-    'chat_proyecto',
+    nombre,
     req.body.entrada,
     config.maxTokensProyecto
   )
   res.json(
     servicio.estimar({
-      funcion: 'chat_proyecto',
+      funcion: nombre,
       entrada: req.body.entrada,
       contextoProyecto,
       preferir: req.body.preferir,
@@ -213,6 +237,23 @@ async function validarCambio(req, res) {
   if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
   const projectId = new ObjectId(req.params.Project_id)
   const eventoId = idValido(req.body?.eventoId)
+  if (req.body?.tipo === 'declaracion') {
+    const sesion = await lectorProyecto.abrir(projectId)
+    const doc = await sesion.leer(req.body?.cambio?.archivo)
+    const esperado = prepararDeclaracion(
+      doc,
+      await servicio.verRegistro(projectId),
+      req.body.retirar === true
+    )
+    if (
+      esperado.antes !== req.body.cambio.antes ||
+      esperado.despues !== req.body.cambio.despues
+    )
+      throw new ErrorEntrada(
+        'La declaración o el registro cambió. Vuelve a generarla.'
+      )
+    return res.json(await verificarCambio(esperado, sesion))
+  }
   if (
     !eventoId ||
     !(await servicio.eventoPropio(usuario(req), projectId, eventoId))
@@ -222,6 +263,133 @@ async function validarCambio(req, res) {
     await verificarCambio(
       req.body?.cambio,
       await lectorProyecto.abrir(projectId)
+    )
+  )
+}
+
+async function declaracion(req, res) {
+  const { servicio, config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
+  const projectId = new ObjectId(req.params.Project_id)
+  const sesion = await lectorProyecto.abrir(projectId)
+  const principal = [...sesion.documentos.values()].find(
+    d => d.id === String(sesion.proyecto.rootDoc_id)
+  )
+  if (!principal)
+    throw new ErrorEntrada(
+      'Selecciona un documento principal antes de generar la declaración.'
+    )
+  const doc = await sesion.leer(principal.ruta)
+  res.json({
+    cambio: prepararDeclaracion(
+      doc,
+      await servicio.verRegistro(projectId),
+      req.body?.retirar === true
+    ),
+    aviso: AVISO_DECLARACION,
+  })
+}
+
+async function validarComentario(req, res) {
+  const { servicio } = await contexto()
+  const projectId = new ObjectId(req.params.Project_id)
+  const eventoId = idValido(req.body?.eventoId)
+  if (
+    !eventoId ||
+    !(await servicio.eventoPropio(usuario(req), projectId, eventoId))
+  )
+    return res.sendStatus(404)
+  const sesion = await lectorProyecto.abrir(projectId)
+  const c = req.body?.comentario
+  const doc = await sesion.leer(c?.archivo)
+  const validada = await validarComentarios(
+    JSON.stringify({
+      explicacion: '',
+      comentarios: [
+        { archivo: c.archivo, cita: c.cita, comentario: c.comentario },
+      ],
+    }),
+    { documentos: [doc] },
+    sesion
+  )
+  res.json(validada.comentarios[0])
+}
+
+async function guardarScript(req, res) {
+  const { servicio, config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
+  const projectId = new ObjectId(req.params.Project_id)
+  const eventoId = idValido(req.body?.eventoId)
+  if (
+    !eventoId ||
+    !(await servicio.eventoPropio(
+      usuario(req),
+      projectId,
+      eventoId,
+      'grafica_datos'
+    ))
+  )
+    return res.sendStatus(404)
+  const archivo = `graficas/grafica-${eventoId}.py`
+  const resultado = await guardarGrafica(
+    projectId,
+    usuario(req),
+    archivo,
+    req.body?.script
+  )
+  await servicio.registrar(projectId, usuario(req), eventoId, archivo)
+  res.json(resultado)
+}
+
+async function soporteSesion(req, res) {
+  const { servicio, config } = await contexto()
+  if (!permitido(req, config))
+    return res.status(503).json({ habilitada: false })
+  res.setHeader('Cache-Control', 'no-store')
+  const e = await servicio.estado(usuario(req))
+  res.json({
+    habilitada: e.habilitada,
+    activada: e.activada,
+    saldo: saldoJson(e.saldo),
+    csrf: req.csrfToken(),
+  })
+}
+
+async function soporte(req, res) {
+  const { servicio, config } = await contexto()
+  if (!permitido(req, config)) return res.sendStatus(503)
+  // Mismo crédito y proveedores del estudiante, sin proyecto ni datos de cuentas.
+  res.setHeader('Cache-Control', 'no-store')
+  let texto = ''
+  const control = new AbortController()
+  res.on('close', () => {
+    if (!res.writableFinished) control.abort()
+  })
+  const r = await servicio.consultar({
+    userId: usuario(req),
+    funcion: 'soporte',
+    entrada: { pregunta: textoFase2(req.body?.pregunta, 4000, 'La pregunta') },
+    senal: control.signal,
+    alEscribir: t => {
+      texto += t
+    },
+  })
+  res.json({ texto, costo: aUsd(r.costoMicro), saldo: saldoJson(r.saldo) })
+}
+
+async function resumen(req, res) {
+  if (!SessionManager.getSessionUser(req.session)?.isAdmin)
+    return res.sendStatus(403)
+  const { c, config } = await contexto()
+  const mes = req.query?.mes
+  if (mes && !/^\d{4}-(0[1-9]|1[0-2])$/.test(mes))
+    throw new ErrorEntrada('El mes debe tener el formato AAAA-MM.')
+  res.setHeader('Cache-Control', 'no-store')
+  res.json(
+    await resumenMensual(
+      c,
+      config,
+      mes ? new Date(`${mes}-15T12:00:00-05:00`) : new Date()
     )
   )
 }
@@ -291,6 +459,12 @@ export default {
   instrucciones: manejar(instrucciones),
   crearInstrucciones: manejar(crearInstrucciones),
   validarCambio: manejar(validarCambio),
+  declaracion: manejar(declaracion),
+  validarComentario: manejar(validarComentario),
+  guardarScript: manejar(guardarScript),
+  soporteSesion: manejar(soporteSesion),
+  soporte: manejar(soporte),
+  resumen: manejar(resumen),
   valorar: manejar(valorar),
   registrar: manejar(registrar),
   verRegistro: manejar(verRegistro),

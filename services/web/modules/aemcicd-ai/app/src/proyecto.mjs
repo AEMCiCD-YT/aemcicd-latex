@@ -15,12 +15,18 @@ export function crearLectorProyecto({
   obtenerProyecto,
   obtenerDocumento,
   crearDocumento,
+  obtenerArchivo,
 }) {
   async function abrir(projectId) {
     const proyecto = await obtenerProyecto(projectId)
     if (!proyecto) throw new ErrorEntrada('No se encontró el proyecto.')
     const documentos = new Map()
+    const archivos = new Map()
     function recorrer(carpeta, prefijo = '') {
+      for (const file of carpeta.fileRefs || []) {
+        const ruta = rutaSegura(prefijo + file.name)
+        archivos.set(ruta, { ...file, ruta })
+      }
       for (const doc of carpeta.docs || []) {
         const ruta = rutaSegura(prefijo + doc.name)
         documentos.set(ruta, { ruta, id: String(doc._id) })
@@ -47,7 +53,17 @@ export function crearLectorProyecto({
       }
       return cache.get(ruta)
     }
-    return { proyecto, documentos, leer }
+    async function leerDatos(ruta) {
+      rutaSegura(ruta)
+      if (documentos.has(ruta)) return (await leer(ruta)).texto
+      const archivo = archivos.get(ruta)
+      if (!archivo || !obtenerArchivo)
+        throw new ErrorEntrada(
+          'El archivo de datos no pertenece a este proyecto.'
+        )
+      return obtenerArchivo(projectId, archivo)
+    }
+    return { proyecto, documentos, leer, leerDatos }
   }
 
   async function preambulo(sesion, doc) {
@@ -70,7 +86,7 @@ export function crearLectorProyecto({
   }
 
   async function preparar(projectId, nombre, entrada, limiteTokens) {
-    funcion(nombre)
+    const def = funcion(nombre)
     const sesion = await abrir(projectId)
     const contexto = { documentos: [], instrucciones: '', destino: null }
     if (sesion.documentos.has(NOMBRE_INSTRUCCIONES)) {
@@ -81,7 +97,12 @@ export function crearLectorProyecto({
         )
     }
     // El cliente solo elige una ruta y posiciones. El texto de referencia lo lee el servidor.
-    if (entrada?.archivo) {
+    if (nombre === 'grafica_datos' && entrada?.archivoDatos) {
+      if (!/\.(csv|txt|tsv)$/i.test(entrada.archivoDatos))
+        throw new ErrorEntrada('Elige un archivo CSV, TSV o TXT.')
+      contexto.datosGrafica = await sesion.leerDatos(entrada.archivoDatos)
+    }
+    if (entrada?.archivo && !def.usaProyecto) {
       const doc = await sesion.leer(entrada.archivo)
       contexto.documentos.push(doc)
       if (nombre.startsWith('corregir_')) {
@@ -129,7 +150,7 @@ export function crearLectorProyecto({
     }
     if (nombre === 'reescribir' && !contexto.destino)
       throw new ErrorEntrada('Selecciona el texto que quieres reescribir.')
-    if (nombre === 'chat_proyecto') {
+    if (nombre === 'chat_proyecto' || def.usaProyecto) {
       contexto.documentos = []
       let tokens = 0
       const docs = [...sesion.documentos.values()].filter(d =>

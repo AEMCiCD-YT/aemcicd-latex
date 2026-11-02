@@ -169,6 +169,39 @@
   }
 }
 
+.aemcicd-ai-fase2 {
+  max-height: 230px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-02);
+  font-size: var(--font-size-02);
+
+  summary {
+    cursor: pointer;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-01);
+  }
+  input,
+  textarea {
+    background: var(--bg-primary-themed);
+    color: var(--content-primary-themed);
+    border: 1px solid var(--border-primary-themed);
+    max-width: 100%;
+  }
+}
+
+.aemcicd-ai-salida-python {
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--content-primary-themed);
+  background: var(--bg-secondary-themed);
+}
+
 .aemcicd-ai-acciones {
   display: flex;
   flex-wrap: wrap;
@@ -282,4 +315,7 @@
   a {
     color: var(--link-ui-themed, var(--link-ui));
   }
+}
+.aemcicd-ai-fase2 > a {
+  color: var(--link-ui-themed, var(--content-primary-themed));
 }

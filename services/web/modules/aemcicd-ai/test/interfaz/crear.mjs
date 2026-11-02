@@ -25,6 +25,10 @@ const adaptadores = [
   'fetch-json',
   'debugging',
   'load-mathjax',
+  'user-context',
+  'modals-context',
+  'tracked-deletes',
+  'history-ot',
 ]
 const componentes = {
   'ol-button': 'Boton',
@@ -44,6 +48,23 @@ await build({
     {
       name: 'adaptadores-overleaf',
       setup(b) {
+        b.onResolve({ filter: /python-execution-context$/ }, () => ({
+          path: join(aqui, 'adaptadores.tsx'),
+        }))
+        b.onResolve(
+          { filter: /^overleaf-editor-core(?:\/lib\/range)?$/ },
+          args => ({
+            path: args.path.endsWith('/range') ? 'rango' : 'operaciones',
+            namespace: 'operaciones-banco',
+          })
+        )
+        b.onLoad({ filter: /.*/, namespace: 'operaciones-banco' }, args => ({
+          contents:
+            args.path === 'rango'
+              ? 'export default class Range { constructor(pos,length){this.pos=pos;this.length=length} }'
+              : 'export class AddCommentOperation { constructor(id,ranges){this.id=id;this.ranges=ranges;this.tipo="comentario-history"} }',
+          loader: 'js',
+        }))
         b.onResolve({ filter: /^@\// }, args => {
           const nombre = args.path.split('/').at(-1)
           if (nombre === 'meta') return { path: join(aqui, 'meta.ts') }

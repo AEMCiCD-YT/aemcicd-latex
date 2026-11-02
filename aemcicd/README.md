@@ -16,6 +16,11 @@ El código modificado se publica aquí, como pide la AGPL, y el pie de página d
 | Aviso para cuentas suspendidas, configurable (`OVERLEAF_SUSPENDED_ACCOUNT_TEXT`)                                                                                                                             | `server-ce/config/settings.js`, `UserPagesController.mjs`, `views/user/accountSuspended.pug`                                                         |
 | Asistente de IA (módulo `aemcicd-ai`), con la dependencia `@ai-sdk/anthropic` y la variable `aemcicdAiEnabled`                                                                                               | `services/web/modules/aemcicd-ai/`, `config/settings.defaults.js`, `ExpressLocals.mjs`, `types/exposed-settings.ts`, `package.json`, `yarn.lock`     |
 | Fase 1 de IA: registrar el botón en Logs, las acciones de selección y su contexto compartido mediante las extensiones existentes; es el único archivo de Overleaf modificado fuera del módulo para esta fase | `services/web/config/settings.defaults.js` (`pdfLogEntryHeaderActionComponents`, `editorFloatingMenuActions`, `rootContextProviders`)                |
+| Fase 2: extensión del menú de importación y aviso al retirar la declaración                                                                                                                                  | `services/web/config/settings.defaults.js` (`projectImportMenuComponents`, `sourceEditorExtensions`)                                                 |
+| Fase 2: conservar seguimiento nativo durante la operación y sincronización; restaurar la elección del usuario                                                                                                | `services/web/frontend/js/features/ide-react/editor/document-container.ts` (`withTrackedChanges`)                                                    |
+| Fase 2: punto de extensión genérico para importar proyectos desde el módulo                                                                                                                                  | `services/web/frontend/js/features/project-list/components/new-project-button.tsx`                                                                   |
+| Fase 2: habilitar la conversión nativa de Word en CE, cuya imagen base carece de Pandoc y ZIP                                                                                                                | `aemcicd/Dockerfile` (`pandoc`, `zip`, `ENABLE_PANDOC_CONVERSIONS=true`, sobrescribible en ejecución)                                                |
+| Fase 2: explicar la exportación ZIP de Prism usando la subida nativa                                                                                                                                         | `services/web/frontend/js/features/project-list/components/new-project-button/upload-project-modal.tsx` (prop opcional `descripcion`)                |
 | El envío de correo ya no escribe la configuración SMTP (con la contraseña) en el log                                                                                                                         | `app/src/Features/Email/EmailSender.mjs`                                                                                                             |
 
 Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se configuran en
@@ -25,7 +30,8 @@ Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se
 
 Módulo propio `services/web/modules/aemcicd-ai` (fase base: crédito, dos proveedores, medición y
 panel en el editor; fase 1 implementada para revisión: diagnósticos, escritura, visión, contexto
-del proyecto, instrucciones y propuestas aplicables). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
+del proyecto, instrucciones y propuestas aplicables; fase 2: seguimiento, revisión, importación,
+declaración y gráficas, con soporte y panel agregado en la plataforma). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
 diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
 [`ia-eval/`](ia-eval/README.md).
 

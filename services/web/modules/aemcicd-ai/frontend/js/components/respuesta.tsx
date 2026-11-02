@@ -5,6 +5,8 @@ import OLTooltip from '@/shared/components/ol/ol-tooltip'
 import Markdown from './markdown'
 import type { Turno } from './ai-panel'
 import Propuesta from './propuesta'
+import Comentario from './comentario'
+import Grafica from './grafica'
 
 // Los bloques ```…``` van aparte, con botón de copiar; el resto se muestra como Markdown.
 function Texto({ texto, terminado }: { texto: string; terminado: boolean }) {
@@ -107,6 +109,18 @@ export default function Respuesta({
         <p className="aemcicd-ai-error" role="alert">
           {turno.aviso}
         </p>
+      )}
+      {turno.estado === 'lista' &&
+        turno.eventoId &&
+        turno.comentarios?.map((comentario, i) => (
+          <Comentario
+            key={i}
+            comentario={comentario}
+            eventoId={turno.eventoId!}
+          />
+        ))}
+      {turno.estado === 'lista' && turno.eventoId && turno.grafica && (
+        <Grafica grafica={turno.grafica} eventoId={turno.eventoId} />
       )}
       {turno.estado === 'lista' && (
         <div className="aemcicd-ai-pie">

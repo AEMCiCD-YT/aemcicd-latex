@@ -10,6 +10,10 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
 import { prepararCaso } from './preparar-caso.mjs'
 import {
+  validarComentarios,
+  validarGrafica,
+} from '../../services/web/modules/aemcicd-ai/app/src/fase2.mjs'
+import {
   ESQUEMA_CAMBIOS,
   validarRespuesta,
 } from '../../services/web/modules/aemcicd-ai/app/src/cambios.mjs'
@@ -88,21 +92,22 @@ async function ejecutar(caso, modelo) {
       maxRetries: 2,
       onError: () => {},
       // Igual que el servidor: las funciones con propuesta usan salida estructurada.
-      ...(def.propuesta && {
+      ...((def.propuesta || def.esquema) && {
         output: Output.object({
-          schema: jsonSchema(ESQUEMA_CAMBIOS),
+          schema: jsonSchema(def.esquema || ESQUEMA_CAMBIOS),
           name: 'propuesta_de_cambios',
         }),
       }),
-      providerOptions: def.propuesta
-        ? {
-            ...opciones(modelo),
-            anthropic: {
-              ...opciones(modelo).anthropic,
-              structuredOutputMode: 'outputFormat',
-            },
-          }
-        : opciones(modelo),
+      providerOptions:
+        def.propuesta || def.esquema
+          ? {
+              ...opciones(modelo),
+              anthropic: {
+                ...opciones(modelo).anthropic,
+                structuredOutputMode: 'outputFormat',
+              },
+            }
+          : opciones(modelo),
     })
     let texto = ''
     let primero
@@ -120,6 +125,23 @@ async function ejecutar(caso, modelo) {
       try {
         const v = await validarRespuesta(texto, contexto, sesion, caso.funcion)
         propuesta = { ok: true, cambios: v.cambios.length }
+      } catch (err) {
+        propuesta = { ok: false, motivo: err.message }
+      }
+    }
+    if (def.esquema) {
+      try {
+        if (def.respuesta === 'comentarios') {
+          const v = await validarComentarios(texto, contexto, sesion)
+          propuesta = { ok: true, cambios: v.comentarios.length }
+        } else {
+          validarGrafica(
+            texto,
+            contexto.datosGrafica || caso.entrada?.seleccion,
+            '000000000000000000000001'
+          )
+          propuesta = { ok: true, cambios: 1 }
+        }
       } catch (err) {
         propuesta = { ok: false, motivo: err.message }
       }
@@ -212,7 +234,9 @@ ${resultados
 await writeFile('informe.html', html)
 for (const r of resumen)
   if (r.conPropuesta)
-    console.log(`${r.m}: ${r.aplicables}/${r.conPropuesta} propuestas aplicables`)
+    console.log(
+      `${r.m}: ${r.aplicables}/${r.conPropuesta} propuestas aplicables`
+    )
 console.log(
   `\nCosto total: $${total.toFixed(4)}. Informe: ${process.cwd()}/informe.html`
 )
