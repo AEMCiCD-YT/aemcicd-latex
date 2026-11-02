@@ -140,7 +140,13 @@ export function ubicar(texto, antes, desde) {
   return { desde: primera, hasta: primera + antes.length }
 }
 
-export async function validarRespuesta(texto, contexto, sesion, nombre) {
+export async function validarRespuesta(
+  texto,
+  contexto,
+  sesion,
+  nombre,
+  { agrupar = true } = {}
+) {
   let respuesta
   try {
     respuesta = leerJson(texto)
@@ -251,7 +257,7 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
         )
     }
     if (
-      nombre === 'reescribir' &&
+      ['reescribir', 'revisar_entrega'].includes(nombre) &&
       JSON.stringify(protegidos(cambio.antes)) !==
         JSON.stringify(protegidos(cambio.despues))
     )
@@ -266,6 +272,7 @@ export async function validarRespuesta(texto, contexto, sesion, nombre) {
       throw new ErrorEntrada('La propuesta contiene cambios superpuestos.')
     cambios.push({ ...cambio, docId: doc.id, desde, hasta, huella: doc.huella })
   }
+  if (!agrupar) return { explicacion: respuesta.explicacion, cambios }
   // Los cambios del mismo archivo se ofrecen como una propuesta atómica. Aplicar el primero
   // por separado invalidaría la huella de los demás, y dejaría correcciones incompletas.
   const agrupados = []

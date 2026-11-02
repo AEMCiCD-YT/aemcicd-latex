@@ -159,10 +159,16 @@ export function crearServicio({
     }
   }
 
-  async function eventoPropio(userId, projectId, eventoId) {
+  async function eventoPropio(userId, projectId, eventoId, funcion) {
     return Boolean(
       await c.eventos.findOne(
-        { _id: eventoId, userId, projectId, estado: 'ok' },
+        {
+          _id: eventoId,
+          userId,
+          projectId,
+          estado: 'ok',
+          ...(funcion && { funcion }),
+        },
         { projection: { _id: 1 } }
       )
     )
@@ -189,7 +195,7 @@ export function crearServicio({
       opciones = {},
       tokensEntrada,
     } = prepararConsulta(funcion, entrada, contextoProyecto)
-    if (funcion === 'chat_proyecto') {
+    if (funcion === 'chat_proyecto' || def.usaProyecto) {
       const estimacion = estimar({
         funcion,
         entrada,
@@ -273,11 +279,18 @@ export function crearServicio({
           abortSignal: senal,
           // Los errores se tratan abajo (fullStream); sin esto el SDK los imprime en la consola.
           onError: () => {},
-          ...(def.propuesta && { output: SALIDA_CAMBIOS }),
+          ...((def.propuesta || def.esquema) && {
+            output: def.esquema
+              ? Output.object({
+                  schema: jsonSchema(def.esquema),
+                  name: 'respuesta_de_revision',
+                })
+              : SALIDA_CAMBIOS,
+          }),
           providerOptions: combinarOpciones(
             // Que OpenAI no guarde las respuestas en su plataforma (Responses API).
             { openai: { store: false } },
-            def.propuesta && {
+            (def.propuesta || def.esquema) && {
               anthropic: { structuredOutputMode: 'outputFormat' },
             },
             opcionesDeEsfuerzo(cand),
