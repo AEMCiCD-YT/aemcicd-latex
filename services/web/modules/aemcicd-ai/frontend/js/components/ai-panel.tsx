@@ -525,7 +525,7 @@ function AiPanel() {
               </OLButton>
             </div>
           )}
-          <label>
+          <label className="aemcicd-ai-modo">
             Modo de conversación
             <select
               value={funcion === 'tutor_latex' ? 'tutor_latex' : 'pregunta'}
