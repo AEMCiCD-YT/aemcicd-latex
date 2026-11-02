@@ -1,7 +1,8 @@
 # aemcicd-ai: asistente de IA de LaTeX AEMCiCD
 
 Módulo propio del fork. El diseño completo está en [`aemcicd/docs/ia-diseno.md`](../../../../aemcicd/docs/ia-diseno.md).
-Este módulo contiene la **fase base**, la **fase 1** y la **fase 2** (desplegadas en producción; [evidencia y límites](../../../../aemcicd/docs/ia-fase-2/despliegue.md)):
+Este módulo contiene la **fase base** y las **fases 1, 2 y 3**, desplegadas en producción
+([evidencia y límites](../../../../aemcicd/docs/ia-fase-3/despliegue.md)):
 
 - conexión con Claude y OpenAI solo desde el servidor (`app/src/proveedores.mjs`);
 - enrutador por nivel, con cambio automático al otro proveedor (`enrutador.mjs`, `servicio.mjs`);
@@ -111,8 +112,8 @@ Cada estudiante debe activarla en su panel antes de consultar.
 
 ## Fase 3: investigación, aprendizaje y trabajo en equipo
 
-Implementada en `ia-fase-3`, todavía sin despliegue. Es la última fase prevista, no una nueva
-base del asistente. Conserva proveedores, crédito, topes, eventos sin contenido y revisión humana.
+Desplegada el 2 de noviembre de 2026, tras unir el PR 7 a `ext-ce`. Es la última fase prevista.
+Conserva proveedores, crédito, topes, eventos sin contenido y revisión humana.
 
 | Función                   | Nivel      | Interfaz                                                                                                                                 |
 | ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |

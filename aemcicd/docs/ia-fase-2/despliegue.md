@@ -1,8 +1,8 @@
 # Fase 2: despliegue de producción
 
-Comprobaciones realizadas el **2 de noviembre de 2026**. Base y fases 1 y 2 están desplegadas;
-la fase 3 sigue planificada. Habilitar el servicio para estudiantes no sustituye su activación
-individual opcional en el panel.
+Registro del despliegue de fase 2 del **2 de noviembre de 2026**. Describe el estado de esa
+publicación, posteriormente sustituida por el [despliegue de fase 3](../ia-fase-3/despliegue.md).
+Habilitar el servicio para estudiantes no sustituye su activación individual opcional en el panel.
 
 ## Versiones y configuración
 
