@@ -240,6 +240,15 @@ try {
     { headers, data: datos }
   )
   assert.equal((await repetido.json()).id, generado.id)
+  const diferente = await api.post(
+    `${base}/project/${proyecto}/aemcicd-ai/documento`,
+    { headers, data: { ...datos, contenido: contenido + '\n% Otra versión' } }
+  )
+  assert.equal(
+    diferente.status(),
+    400,
+    'No debe sobrescribir un archivo existente con contenido distinto'
+  )
   const integridad = await nativo(`
  const {lectorProyecto}=await import('./modules/aemcicd-ai/app/src/overleaf.mjs');const s=await lectorProyecto.abrir('${proyecto}');
  const principal=await s.leer('main.tex');const nuevo=await s.leer('${generado.archivo}');
@@ -249,6 +258,44 @@ try {
   assert.equal(integridad.original, true)
   assert.equal(integridad.nuevo, true)
   assert.ok(integridad.registro > 0)
+  const codigoEvento = await nativo(`
+    const {getCollectionInternal,ObjectId}=await import('./app/src/infrastructure/mongodb.mjs');
+    const {lectorProyecto}=await import('./modules/aemcicd-ai/app/src/overleaf.mjs');
+    const ev=await getCollectionInternal('aemcicdAiEventos');
+    const previo=await ev.findOne({_id:new ObjectId('${resultado.eventoId}')});
+    const id=new ObjectId();await ev.insertOne({...previo,_id:id,funcion:'codigo_algoritmo'});
+    const s=await lectorProyecto.abrir('${proyecto}');
+    console.log('FASE3_RESULTADO:'+JSON.stringify({eventoId:String(id),antes:(await s.leer('main.tex')).huella}));
+  `)
+  const codigoContenido =
+    '\\documentclass{article}\n\\usepackage{algorithm2e}\n\\begin{document}FASE3CODIGOALGORITMONOPERSISTIR\\end{document}'
+  const codigoGuardar = await api.post(
+    `${base}/project/${proyecto}/aemcicd-ai/documento`,
+    {
+      headers,
+      data: {
+        eventoId: codigoEvento.eventoId,
+        funcion: 'codigo_algoritmo',
+        contenido: codigoContenido,
+      },
+    }
+  )
+  assert.equal(codigoGuardar.status(), 200, await codigoGuardar.text())
+  const codigoGuardado = await codigoGuardar.json()
+  assert.equal(
+    codigoGuardado.archivo,
+    `ia-generados/codigo_algoritmo-${codigoEvento.eventoId}.tex`
+  )
+  const codigoIntegridad = await nativo(`
+    const {lectorProyecto}=await import('./modules/aemcicd-ai/app/src/overleaf.mjs');
+    const {getCollectionInternal}=await import('./app/src/infrastructure/mongodb.mjs');
+    const s=await lectorProyecto.abrir('${proyecto}');
+    const registro=await (await getCollectionInternal('aemcicdAiRegistro')).find({}).toArray();
+    if(JSON.stringify(registro).includes('FASE3CODIGOALGORITMONOPERSISTIR'))throw new Error('Contenido de algoritmo en registro');
+    console.log('FASE3_RESULTADO:'+JSON.stringify({despues:(await s.leer('main.tex')).huella,creado:s.documentos.has('${codigoGuardado.archivo}')}));
+  `)
+  assert.equal(codigoEvento.antes, codigoIntegridad.despues)
+  assert.equal(codigoIntegridad.creado, true)
   const conversion = await api.get(
     `${base}/project/${proyecto}/download/conversion/docx?responseFormat=json&rootResourcePath=main.tex`
   )
@@ -271,6 +318,28 @@ try {
     await page.getByLabel('Pregunta o tema', { exact: true }).waitFor()
     await page.screenshot({ path: join(salida, `panel-real-${tema}.png`) })
   }
+  await page.getByRole('button', { name: 'Historial', exact: true }).click()
+  await page.locator('.history-react-toolbar').waitFor()
+  const botonHistorial = page.getByRole('button', {
+    name: 'Resumir con IA',
+    exact: true,
+  })
+  await page.getByTestId('history-version').nth(1).click()
+  await page.waitForLoadState('networkidle')
+  await page.locator('.doc-container .cm-content').waitFor()
+  await page.screenshot({ path: join(salida, 'historial-real.png') })
+  const pedidoHistorial = page.waitForRequest(
+    r => r.url().endsWith('/aemcicd-ai/estimacion') && r.method() === 'POST'
+  )
+  await botonHistorial.click()
+  assert.equal(
+    (await pedidoHistorial).postDataJSON().funcion,
+    'resumen_cambios'
+  )
+  await page
+    .getByRole('button', { name: 'Consultar con este costo', exact: true })
+    .scrollIntoViewIfNeeded()
+  await page.screenshot({ path: join(salida, 'historial-estimacion-real.png') })
   await writeFile(
     join(salida, 'resultado.json'),
     JSON.stringify(
@@ -279,6 +348,7 @@ try {
         plantilla: plantilla.projectId,
         ...resultado,
         ...integridad,
+        codigoAlgoritmo: codigoIntegridad.creado,
         word: true,
         originalPrevio: original.length,
       },
@@ -287,7 +357,7 @@ try {
     )
   )
   console.log(
-    'Overleaf real: galería, PDF del servidor, DOI real, historial real, estimaciones, pertenencia, guardado nativo idempotente y Word: correctos. Sin modelos; evento de autorización sintético.'
+    'Overleaf real: galería, PDF del servidor, DOI real, historial real, estimaciones, pertenencia, Beamer/algoritmo nuevos con original intacto, guardado idempotente y Word: correctos. Sin modelos; eventos de autorización sintéticos.'
   )
 } finally {
   await navegador.close()
