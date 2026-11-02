@@ -543,7 +543,7 @@ function AiPanel() {
             <input
               type="checkbox"
               checked={usarProyecto}
-              disabled={ocupado || !!imagen}
+              disabled={ocupado || !!imagen || funcion === 'tutor_latex'}
               onChange={e => setUsarProyecto(e.target.checked)}
             />{' '}
             Usar todo el proyecto

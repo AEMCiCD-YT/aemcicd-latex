@@ -25,7 +25,9 @@ RUN cd /overleaf/services/web \
 FROM ${BASE}
 # El importador Word nativo de CLSI necesita Pandoc y ZIP también en modo CE (ejecutor local).
 # El valor puede sobrescribirse al ejecutar la imagen. No modifica latex-server.
-ENV ENABLE_PANDOC_CONVERSIONS=true
+# La galería nativa debe estar disponible para las plantillas del programa. Ambos valores
+# pueden sobrescribirse explícitamente al ejecutar la imagen.
+ENV ENABLE_PANDOC_CONVERSIONS=true OVERLEAF_TEMPLATE_GALLERY=true
 RUN apt-get update \
  && apt-get install -y --no-install-recommends pandoc zip \
  && rm -rf /var/lib/apt/lists/*
