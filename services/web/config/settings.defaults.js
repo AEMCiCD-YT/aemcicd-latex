@@ -1032,7 +1032,12 @@ module.exports = {
       ),
     ],
     contactUsModal: [],
-    sourceEditorExtensions: [],
+    sourceEditorExtensions: [
+      Path.resolve(__dirname, '../modules/aemcicd-ai/frontend/js/declaracion-extension.ts'),
+    ],
+    projectImportMenuComponents: [
+      Path.resolve(__dirname, '../modules/aemcicd-ai/frontend/js/components/importar.tsx'),
+    ],
     sourceEditorVisualExtensions: [],
     sourceEditorComponents: [],
     pdfLogEntryHeaderActionComponents: [

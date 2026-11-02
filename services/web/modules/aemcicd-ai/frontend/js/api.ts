@@ -25,7 +25,24 @@ export type FinConsulta = {
   explicacion?: string
   cambios?: Cambio[]
   aviso?: string
+  comentarios?: ComentarioIA[]
+  grafica?: { archivo: string; script: string }
 }
+
+export type ComentarioIA = {
+  archivo: string
+  docId: string
+  cita: string
+  comentario: string
+  desde: number
+  hasta: number
+}
+export const FUNCIONES_PROYECTO = [
+  'chat_proyecto',
+  'revisor_jurado',
+  'revisar_entrega',
+  'revisar_importacion',
+]
 
 export type Cambio = {
   archivo: string
@@ -59,11 +76,48 @@ export const crearInstrucciones = (projectId: string) =>
   postJSON<{ id: string }>(ruta(projectId, 'instrucciones'))
 export const validarCambio = (
   projectId: string,
-  eventoId: string,
-  cambio: Cambio
+  eventoId: string | undefined,
+  cambio: Cambio,
+  declaracion?: { retirar: boolean }
 ) =>
   postJSON<Cambio>(ruta(projectId, 'validar-cambio'), {
-    body: { eventoId, cambio },
+    body: {
+      eventoId,
+      cambio,
+      ...(declaracion
+        ? { tipo: 'declaracion', retirar: declaracion.retirar }
+        : {}),
+    },
+  })
+
+export const validarComentario = (
+  projectId: string,
+  eventoId: string,
+  comentario: ComentarioIA
+) =>
+  postJSON<ComentarioIA>(ruta(projectId, 'validar-comentario'), {
+    body: { eventoId, comentario },
+  })
+export const leerRegistro = (projectId: string) =>
+  getJSON<{
+    registro: {
+      userId: string
+      funcion: string
+      resumen: string
+      fecha: string
+    }[]
+  }>(ruta(projectId, 'registro'))
+export const generarDeclaracion = (projectId: string, retirar: boolean) =>
+  postJSON<{ cambio: Cambio; aviso: string }>(ruta(projectId, 'declaracion'), {
+    body: { retirar },
+  })
+export const guardarGrafica = (
+  projectId: string,
+  eventoId: string,
+  script: string
+) =>
+  postJSON<{ id: string; archivo: string }>(ruta(projectId, 'grafica'), {
+    body: { eventoId, script },
   })
 
 export type ErrorConsulta = { tipo: 'error'; codigo: string; mensaje: string }

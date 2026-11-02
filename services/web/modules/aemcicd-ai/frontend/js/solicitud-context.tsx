@@ -1,7 +1,15 @@
-import { createContext, PropsWithChildren, useContext, useState } from 'react'
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useState,
+  useEffect,
+} from 'react'
 import { useRailContext } from '@/features/ide-react/context/rail-context'
 import getMeta from '@/utils/meta'
 import type { Solicitud } from './api'
+import { useModalsContext } from '@/features/ide-react/context/modals-context'
+import { AVISO } from './components/registro'
 
 const Contexto = createContext<{
   pendiente: Solicitud | null
@@ -15,6 +23,14 @@ export default function SolicitudProvider({ children }: PropsWithChildren) {
   const [pendiente, setPendiente] = useState<Solicitud | null>(null)
   const [ocupado, setOcupado] = useState(false)
   const { openTab } = useRailContext()
+  const { showGenericMessageModal } = useModalsContext()
+  useEffect(() => {
+    const avisar = () =>
+      showGenericMessageModal('Declaración de uso de IA', AVISO)
+    window.addEventListener('aemcicd-ai:declaracion-retirada', avisar)
+    return () =>
+      window.removeEventListener('aemcicd-ai:declaracion-retirada', avisar)
+  }, [showGenericMessageModal])
   return (
     <Contexto.Provider
       value={{

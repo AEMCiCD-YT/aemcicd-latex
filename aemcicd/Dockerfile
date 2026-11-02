@@ -23,6 +23,12 @@ RUN cd /overleaf/services/web \
 
 # ---------- Imagen final ----------
 FROM ${BASE}
+# El importador Word nativo de CLSI necesita Pandoc y ZIP también en modo CE (ejecutor local).
+# El valor puede sobrescribirse al ejecutar la imagen. No modifica latex-server.
+ENV ENABLE_PANDOC_CONVERSIONS=true
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends pandoc zip \
+ && rm -rf /var/lib/apt/lists/*
 # Dependencias de producción: el fork añade @ai-sdk/anthropic a services/web. Sin scripts de
 # instalación, porque la imagen no trae compilador y los módulos nativos ya vienen compilados.
 COPY yarn.lock /overleaf/yarn.lock

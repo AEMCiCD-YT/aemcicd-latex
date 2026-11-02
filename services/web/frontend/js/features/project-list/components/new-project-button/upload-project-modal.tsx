@@ -18,9 +18,11 @@ import '@uppy/dashboard/dist/style.css'
 function UploadProjectModal({
   onHide,
   openProject,
+  descripcion,
 }: {
   onHide: () => void
   openProject: (id: string) => void
+  descripcion?: string
 }) {
   const { t } = useTranslation()
   const themed = useFeatureFlag('themed-modals')
@@ -45,6 +47,7 @@ function UploadProjectModal({
         <OLModalTitle as="h3">{t('upload_zipped_project')}</OLModalTitle>
       </OLModalHeader>
       <OLModalBody>
+        {descripcion && <p>{descripcion}</p>}
         <Dashboard
           uppy={uppy}
           proudlyDisplayPoweredByUppy={false}

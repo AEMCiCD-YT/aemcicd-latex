@@ -11,6 +11,8 @@ import {
   Cambio,
   Solicitud,
   Estimacion,
+  ComentarioIA,
+  FUNCIONES_PROYECTO,
   activar,
   consultar,
   estimar,
@@ -20,6 +22,7 @@ import {
   valorar,
 } from '../api'
 import Respuesta from './respuesta'
+import AccionesFase2 from './acciones-fase2'
 import { useSolicitudIA } from '../solicitud-context'
 import { useEditorOpenDocContext } from '@/features/ide-react/context/editor-open-doc-context'
 import { useEditorPropertiesContext } from '@/features/ide-react/context/editor-properties-context'
@@ -45,6 +48,8 @@ export type Turno = {
   solicitud: Solicitud
   cambios?: Cambio[]
   aviso?: string
+  comentarios?: ComentarioIA[]
+  grafica?: { archivo: string; script: string }
 }
 
 // El saldo se muestra truncado: con $0,995 disponibles se lee $0,99, no $1,00.
@@ -239,6 +244,8 @@ function AiPanel() {
           texto: r.explicacion ?? t.texto,
           cambios: r.cambios,
           aviso: r.aviso,
+          comentarios: r.comentarios,
+          grafica: r.grafica,
         }))
         setEstado(e => (e ? { ...e, saldo: r.saldo } : e))
       } else {
@@ -264,7 +271,8 @@ function AiPanel() {
     if (ocupado || control.current) return
     setAviso('')
     setConfirmacion(null)
-    if (solicitud.funcion !== 'chat_proyecto') return preguntar(solicitud)
+    if (!FUNCIONES_PROYECTO.includes(solicitud.funcion))
+      return preguntar(solicitud)
     setOcupado(true)
     try {
       const estimacion = await estimar(projectId, solicitud)
@@ -419,6 +427,7 @@ function AiPanel() {
           <div ref={fin} />
         </div>
         <form className="aemcicd-ai-formulario" onSubmit={enviar}>
+          <AccionesFase2 />
           {tieneInstrucciones === false && permisos.write && (
             <OLButton
               size="sm"

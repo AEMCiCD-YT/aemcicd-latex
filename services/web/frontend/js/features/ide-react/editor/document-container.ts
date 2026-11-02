@@ -106,6 +106,7 @@ export class DocumentContainer extends EventEmitter {
   private wantToBeJoined = false
   private chaosMonkeyTimer: number | null = null
   public track_changes_as: string | null = null
+  private trackedAction: { previous: string | null } | null = null
 
   // Recovered offline edits replay as if they had reached the server before we
   // went offline, so their tracking state comes from the backup record rather
@@ -251,6 +252,10 @@ export class DocumentContainer extends EventEmitter {
   }
 
   setTrackChangesUserId(userId: string | null) {
+    if (this.trackedAction) {
+      this.trackedAction.previous = userId
+      return
+    }
     if (this.trackChangesPinnedForRecovery) {
       this.deferredTrackChangesUserId = userId
       // Hold the editor at the pinned state too, so anything typed during the
@@ -265,6 +270,25 @@ export class DocumentContainer extends EventEmitter {
     }
     if (this.cm6) {
       this.cm6.setTrackChangesUserId(userId)
+    }
+  }
+
+  // Mantiene el seguimiento hasta enviar las operaciones OT pendientes. Al terminar restaura
+  // la última elección del interruptor, incluso si React la cambió durante la espera.
+  async withTrackedChanges<T>(
+    userId: string,
+    action: () => Promise<T>
+  ): Promise<T> {
+    if (this.trackedAction || this.trackChangesPinnedForRecovery)
+      throw new Error('Ya hay una operación con seguimiento pendiente')
+    const state = { previous: this.track_changes_as }
+    this.setTrackChangesUserId(userId)
+    this.trackedAction = state
+    try {
+      return await action()
+    } finally {
+      this.trackedAction = null
+      this.setTrackChangesUserId(state.previous)
     }
   }
 

@@ -27,7 +27,8 @@ export function ubicar(texto: string, antes: string, desde: number) {
 export async function aplicarEnEditor(
   view: EditorView,
   cambio: Cambio,
-  autorizado: () => boolean
+  autorizado: () => boolean,
+  antesDeEscribir?: (desde: number) => void
 ) {
   const documento = view.state.doc
   const texto = documento.toString()
@@ -46,6 +47,7 @@ export async function aplicarEnEditor(
     throw new Error(
       'El texto que había que cambiar ya no está igual. Vuelve a consultar antes de aplicar.'
     )
+  antesDeEscribir?.(lugar.desde)
   view.dispatch({
     changes: { from: lugar.desde, to: lugar.hasta, insert: cambio.despues },
     annotations: Transaction.userEvent.of('input.aemcicd-ai'),

@@ -6,18 +6,25 @@ import { useEditorOpenDocContext } from '@/features/ide-react/context/editor-ope
 import OLButton from '@/shared/components/ol/ol-button'
 import { Cambio, registrar, validarCambio } from '../api'
 import { aplicarEnEditor } from '../aplicar'
+import { useUserContext } from '@/shared/context/user-context'
+import { useRailContext } from '@/features/ide-react/context/rail-context'
+import { comentarIA } from '../comentarios'
 
 export default function Propuesta({
   cambio,
   eventoId,
+  declaracion,
 }: {
   cambio: Cambio
-  eventoId: string
+  eventoId?: string
+  declaracion?: { retirar: boolean }
 }) {
   const { projectId } = useProjectContext()
   const permisos = usePermissionsContext()
   const { currentDocument } = useEditorOpenDocContext()
-  const { openDocWithId } = useEditorManagerContext()
+  const { openDocWithId, openDocs } = useEditorManagerContext()
+  const user = useUserContext()
+  const { openTab } = useRailContext()
   const actual = useRef({ currentDocument, permisos })
   useLayoutEffect(() => {
     actual.current = { currentDocument, permisos }
@@ -26,9 +33,11 @@ export default function Propuesta({
     'pendiente' | 'aplicando' | 'aplicada' | 'descartada'
   >('pendiente')
   const [error, setError] = useState('')
+  const [avisoMarca, setAvisoMarca] = useState('')
   const [registroPendiente, setRegistroPendiente] = useState(false)
 
   const guardarRegistro = async () => {
+    if (!eventoId) return
     try {
       await registrar(projectId, eventoId, cambio.archivo)
       setRegistroPendiente(false)
@@ -43,8 +52,9 @@ export default function Propuesta({
     if (estado !== 'pendiente') return
     setEstado('aplicando')
     setError('')
+    let cambioEscrito = false
     try {
-      await validarCambio(projectId, eventoId, cambio)
+      await validarCambio(projectId, eventoId, cambio, declaracion)
       await openDocWithId(cambio.docId)
       // Abrir un archivo requiere montar el editor y unirlo a ShareJS antes de despachar.
       const limite = Date.now() + 5000
@@ -58,22 +68,66 @@ export default function Propuesta({
       const view = doc?.cm6?.view
       if (!view || !doc || doc.doc_id !== cambio.docId)
         throw new Error('No se pudo abrir el archivo. Inténtalo de nuevo.')
-      await aplicarEnEditor(
-        view,
-        cambio,
-        () =>
-          actual.current.permisos.write &&
-          actual.current.currentDocument === doc
-      )
+      if (!declaracion && !permisos.trackedWrite)
+        throw new Error(
+          'Este proyecto no permite proponer cambios con seguimiento.'
+        )
+      await openDocs.awaitBufferedOps(AbortSignal.timeout(5000))
+      let posicion = cambio.desde
+      const escribir = async () => {
+        await aplicarEnEditor(
+          view,
+          cambio,
+          () =>
+            actual.current.permisos.write &&
+            actual.current.currentDocument === doc,
+          desde => {
+            posicion = desde
+          }
+        )
+        cambioEscrito = true
+        setEstado('aplicada')
+        await openDocs.awaitBufferedOps(AbortSignal.timeout(5000))
+      }
+      if (declaracion) await escribir()
+      else {
+        if (!user.id)
+          throw new Error('Inicia sesión para enviar cambios a revisión.')
+        await doc.withTrackedChanges(user.id, escribir)
+      }
       setEstado('aplicada')
+      if (!declaracion) {
+        openTab('review-panel')
+        const nombre =
+          [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+          'el estudiante'
+        try {
+          const cita =
+            cambio.despues ||
+            view.state.sliceDoc(Math.max(0, posicion - 1), posicion)
+          await comentarIA(
+            projectId,
+            doc,
+            cambio.despues ? posicion : Math.max(0, posicion - 1),
+            cita,
+            `IA, pedido por ${nombre}. Propuesta pendiente de aceptación o rechazo en Control de cambios.`
+          )
+        } catch {
+          setAvisoMarca(
+            'La propuesta quedó en revisión, pero no se pudo añadir su comentario de identificación. Revisa el Panel de revisión.'
+          )
+        }
+      }
       await guardarRegistro()
     } catch (err) {
-      setEstado('pendiente')
+      setEstado(cambioEscrito ? 'aplicada' : 'pendiente')
       const datos = (err as { data?: { mensaje?: string } }).data
       setError(
-        datos?.mensaje ||
-          (err as Error).message ||
-          'No se pudo aplicar el cambio.'
+        cambioEscrito
+          ? 'El cambio ya se envió al editor. Comprueba la sincronización y el Panel de revisión antes de continuar.'
+          : datos?.mensaje ||
+              (err as Error).message ||
+              'No se pudo aplicar el cambio.'
       )
     }
   }
@@ -101,7 +155,7 @@ export default function Propuesta({
               isLoading={estado === 'aplicando'}
               onClick={aplicar}
             >
-              Aplicar
+              {declaracion ? 'Aplicar' : 'Enviar a revisión'}
             </OLButton>
           )}
           <OLButton
@@ -115,7 +169,11 @@ export default function Propuesta({
         </div>
       ) : (
         <p role="status">
-          {estado === 'aplicada' ? 'Cambio aplicado.' : 'Propuesta descartada.'}
+          {estado === 'aplicada'
+            ? declaracion
+              ? 'Cambio aplicado.'
+              : 'Propuesta enviada al Panel de revisión.'
+            : 'Propuesta descartada.'}
         </p>
       )}
       {error && (
@@ -123,6 +181,7 @@ export default function Propuesta({
           {error}
         </p>
       )}
+      {avisoMarca && <p role="alert">{avisoMarca}</p>}
       {registroPendiente && (
         <OLButton size="sm" variant="link" onClick={guardarRegistro}>
           Reintentar registro
