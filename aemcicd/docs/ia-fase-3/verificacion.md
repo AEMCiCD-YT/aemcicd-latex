@@ -1,8 +1,9 @@
 # Fase 3: comprobación y entrega
 
-**Estado:** implementada en `ia-fase-3` para revisión, sin unir ni desplegar. Es la última fase
-prevista. Producción conserva la fase 2 (`a5`), la IA habilitada para estudiantes y los términos
-1.2. Esta entrega no cambia sus claves, crédito ni topes.
+**Alcance:** batería previa a la publicación, realizada en `ia-fase-3`. La implementación ya
+se unió y desplegó el 2 de noviembre de 2026; el [registro de producción](despliegue.md) contiene
+las versiones, el respaldo y sus comprobaciones. Es la última fase prevista. Se mantienen las
+claves, el crédito, los topes y la IA habilitada para estudiantes.
 
 ## Resultado
 
@@ -57,12 +58,13 @@ construcción correcta), con etiqueta
 `sha256:6176fd3802cdf2bd2b74cd98650e835fb6ee19237f85e1d2eeadad11ff331ee4`.
 Incluye la galería habilitada, el ajuste del modo tutor y la conservación del código original
 al generar algoritmos. Los commits posteriores de documentación y pruebas no cambian el
-código de la aplicación. No sustituye la imagen instalada `a5`.
+código de la aplicación. Esta imagen sustituyó posteriormente a `a5`; véase el registro de
+producción para distinguir ambas baterías de comprobaciones.
 
 El [PR 4 de `latex-server`](https://github.com/AEMCiCD-YT/latex-server/pull/4) prepara esa
 referencia por digest en el instalador y admite los nombres nuevos en los totales. El
 [PR 81 de plataforma](https://github.com/AEMCiCD-YT/aemcicd-platform/pull/81) prepara el contrato
-de agregados y los términos 1.3. Ninguno se ha unido ni instalado como parte de esta entrega.
+de agregados y los términos 1.3. Los tres PR se unieron para la publicación coordinada posterior.
 
 PDF.js ya estaba en el lockfile, pero como dependencia de desarrollo de web. Se mueve la misma
 versión 5.1.91 a producción para el parser del servidor. No se añaden versiones ni se regenera
@@ -97,8 +99,8 @@ sin contenido para comprobar el guardado real; no lo presenta como una respuesta
   referencia: siguen fuera del alcance o requieren revisión humana.
 - Colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
   Las pruebas locales anteriores y las de fase 3 no sustituyen ese recorrido de producción.
-- Despliegue de fase 3, de sus listas de funciones y de los términos 1.3. Los PRs deben revisarse
-  y publicarse coordinadamente antes de anunciar estas funciones como disponibles.
+- Esta batería local no certifica por sí sola el despliegue. La imagen, las listas de funciones
+  y los términos 1.3 se comprobaron posteriormente como indica el registro de producción.
 
 ## Capturas
 

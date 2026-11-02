@@ -1,6 +1,6 @@
 # IA en LaTeX AEMCiCD: documento de diseño
 
-**Estado:** fase base y fases 1 y 2 desplegadas en producción. IA habilitada para estudiantes, con activación individual opcional. La fase 3 está implementada para revisión en `ia-fase-3`, sin despliegue; es la última fase prevista. No hay una fase 4 definida.
+**Estado:** fase base y fases 1, 2 y 3 desplegadas en producción. IA habilitada para estudiantes, con activación individual opcional. La fase 3 es la última fase prevista; no hay una fase 4 definida. [Despliegue y límites de comprobación](ia-fase-3/despliegue.md).
 **Actualizado:** 2 de noviembre de 2026.
 **Evidencia:** [despliegue y comprobaciones de producción](ia-fase-2/despliegue.md).
 **Alcance:** servidor `latex.aemcicd.org` (este fork de Overleaf Extended CE) y la plataforma
@@ -136,7 +136,11 @@ propuestas enviadas a revisión, observaciones publicadas y scripts guardados; n
 aceptación posterior ni certifica que estén en la versión final. La declaración lo explica y pide
 ajustarla a los usos efectivamente incorporados.
 
-### Fase 3: última fase (implementada para revisión)
+### Fase 3: última fase (desplegada el 2 de noviembre de 2026)
+
+Unida a `ext-ce` mediante el PR 7 y desplegada con la imagen `6.3.0-ext-v5.1-fase3-8cdc8469`,
+fijada por digest. La plataforma y el conector admiten sus totales; los términos 1.3 están
+publicados. Se conservan crédito, topes, claves y acceso de estudiantes.
 
 - **Investigación** (área 4): bibliografía verificada contra el DOI, citas faltantes, chat con
   los PDF del proyecto.
@@ -174,9 +178,9 @@ La imagen habilita `OVERLEAF_TEMPLATE_GALLERY=true`, sobrescribible en ejecució
 la conversión nativa de Pandoc sin modelo ni consumo de crédito de IA.
 
 La plataforma y `latex-sync` amplían sus listas cerradas de funciones para admitir estos
-agregados sin permitir contenido ni identificadores adicionales. Los términos 1.3 se preparan
-en el PR complementario para informar de Crossref y del texto de PDF; producción conserva 1.2
-hasta que se publique esa revisión. [Comprobación y límites de fase 3](ia-fase-3/verificacion.md).
+agregados sin permitir contenido ni identificadores adicionales. Los términos 1.3 publicados
+informan de Crossref y del texto de PDF. [Pruebas locales](ia-fase-3/verificacion.md) y
+[comprobaciones del despliegue](ia-fase-3/despliegue.md) distinguen lo verificado y lo pendiente.
 
 ### Fuera de alcance
 
@@ -573,9 +577,9 @@ Contenido de los términos y del aviso:
 
 ## 14. Seguimiento tras el despliegue
 
-1. Completar la evaluación de calidad de las funciones de fase 2 con proveedores reales.
+1. Completar la evaluación de calidad de las funciones de fases 2 y 3 con proveedores reales.
 2. Comprobar colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
 3. Revisar periódicamente las políticas de retención, los presupuestos y las métricas del piloto.
-4. Revisar y desplegar coordinadamente la fase 3, la lista de funciones del conector y la
-   plataforma, y los términos 1.3. Las claves, la ejecución explícita de Pyodide y el envío de totales ya
-   están configurados o comprobados; no son pendientes de implantación.
+4. Seguir el uso y la calidad de las funciones publicadas. Las tres fases, las claves, la
+   ejecución explícita de Pyodide, el envío automático de totales y los términos 1.3 ya están
+   implantados; no hay una nueva fase de funciones prevista.

@@ -42,8 +42,8 @@ Módulo propio `services/web/modules/aemcicd-ai` (fase base: crédito, dos prove
 panel en el editor; fase 1 desplegada: diagnósticos, escritura, visión, contexto
 del proyecto, instrucciones y propuestas aplicables; fase 2: seguimiento, revisión, importación,
 declaración y gráficas, con soporte y panel agregado en la plataforma). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
-Estado: base y fases 1 y 2 en producción, IA disponible para estudiantes con activación individual;
-fase 3 implementada para revisión en `ia-fase-3`, todavía sin desplegar. [Despliegue y límites de verificación](docs/ia-fase-2/despliegue.md).
+Estado: base y fases 1, 2 y 3 en producción, IA disponible para estudiantes con activación individual.
+La fase 3 es la última prevista. [Despliegue y límites de verificación](docs/ia-fase-3/despliegue.md).
 Diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
 [`ia-eval/`](ia-eval/README.md).
 
