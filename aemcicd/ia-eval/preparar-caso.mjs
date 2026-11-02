@@ -1,4 +1,8 @@
 import { readFile } from 'node:fs/promises'
+import {
+  dato,
+  escapar,
+} from '../../services/web/modules/aemcicd-ai/app/src/datos.mjs'
 import { funcion } from '../../services/web/modules/aemcicd-ai/app/src/funciones.mjs'
 import { crearLectorProyecto } from '../../services/web/modules/aemcicd-ai/app/src/proyecto.mjs'
 
@@ -21,8 +25,31 @@ export async function prepararCaso(caso) {
   const lector = crearLectorProyecto({
     obtenerProyecto: async () => ({
       rootDoc_id: docs.find(d => d.name === 'main.tex')?._id,
-      rootFolder: [{ docs, folders: [] }],
+      rootFolder: [
+        {
+          docs,
+          folders: [],
+          fileRefs: Object.keys(caso.pdfs || {}).map((name, i) => ({
+            name,
+            hash: String(i),
+          })),
+        },
+      ],
     }),
+    obtenerArchivoBinario: async () => Buffer.from('%PDF-'),
+    extraerTextoPdf: async (_, ruta) =>
+      caso.pdfs[ruta]
+        .map((texto, i) =>
+          dato(
+            'pagina_pdf',
+            texto,
+            ` ruta="${escapar(ruta)}" numero="${i + 1}"`
+          )
+        )
+        .join('\n'),
+    obtenerHistorial: async () =>
+      dato('historial', JSON.stringify(caso.historial)),
+    buscarBibliografia: async () => caso.referencias,
     obtenerDocumento: async (_, id) => ({
       lines: archivos[docs[Number(id)].name].split('\n'),
       version: 1,

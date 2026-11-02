@@ -7,6 +7,7 @@ import type { Turno } from './ai-panel'
 import Propuesta from './propuesta'
 import Comentario from './comentario'
 import Grafica from './grafica'
+import Documento from './documento'
 
 // Los bloques ```…``` van aparte, con botón de copiar; el resto se muestra como Markdown.
 function Texto({ texto, terminado }: { texto: string; terminado: boolean }) {
@@ -121,6 +122,9 @@ export default function Respuesta({
         ))}
       {turno.estado === 'lista' && turno.eventoId && turno.grafica && (
         <Grafica grafica={turno.grafica} eventoId={turno.eventoId} />
+      )}
+      {turno.estado === 'lista' && turno.eventoId && turno.documento && (
+        <Documento documento={turno.documento} eventoId={turno.eventoId} />
       )}
       {turno.estado === 'lista' && (
         <div className="aemcicd-ai-pie">

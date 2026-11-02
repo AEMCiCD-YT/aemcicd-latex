@@ -8,6 +8,11 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { streamText, Output, jsonSchema } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
+import {
+  validarBibliografia,
+  validarDocumento,
+  verificarClavesCitas,
+} from '../../services/web/modules/aemcicd-ai/app/src/fase3.mjs'
 import { prepararCaso } from './preparar-caso.mjs'
 import {
   validarComentarios,
@@ -124,6 +129,8 @@ async function ejecutar(caso, modelo) {
     if (def.propuesta) {
       try {
         const v = await validarRespuesta(texto, contexto, sesion, caso.funcion)
+        if (caso.funcion === 'citas_faltantes')
+          verificarClavesCitas(v, contexto)
         propuesta = { ok: true, cambios: v.cambios.length }
       } catch (err) {
         propuesta = { ok: false, motivo: err.message }
@@ -134,6 +141,12 @@ async function ejecutar(caso, modelo) {
         if (def.respuesta === 'comentarios') {
           const v = await validarComentarios(texto, contexto, sesion)
           propuesta = { ok: true, cambios: v.comentarios.length }
+        } else if (def.respuesta === 'bibliografia') {
+          const v = await validarBibliografia(texto, contexto, sesion)
+          propuesta = { ok: true, cambios: v.cambios.length }
+        } else if (def.respuesta === 'documento') {
+          validarDocumento(texto, caso.funcion, '000000000000000000000001')
+          propuesta = { ok: true, cambios: 1 }
         } else {
           validarGrafica(
             texto,

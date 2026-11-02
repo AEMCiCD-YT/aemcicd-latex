@@ -1,3 +1,7 @@
+import importOverleafModules from '../../../../../../../frontend/macros/import-overleaf-module.macro'
+const accionesPlantillas = importOverleafModules(
+  'templateGalleryActionComponents'
+)
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import OLRow from '@/shared/components/ol/ol-row'
@@ -7,11 +11,7 @@ import Pagination from '@/shared/components/pagination-cep'
 
 export default function TemplateGallery() {
   const { t } = useTranslation()
-  const {
-    searchText,
-    sort,
-    visibleTemplates,
-  } = useTemplateGalleryContext()
+  const { searchText, sort, visibleTemplates } = useTemplateGalleryContext()
 
   const templatesPerPage = 6
   const totalPages = Math.ceil(visibleTemplates.length / templatesPerPage)
@@ -40,10 +40,17 @@ export default function TemplateGallery() {
   }, [searchText])
 
   const startIndex = (currentPage - 1) * templatesPerPage
-  const currentTemplates = visibleTemplates.slice(startIndex, startIndex + templatesPerPage)
+  const currentTemplates = visibleTemplates.slice(
+    startIndex,
+    startIndex + templatesPerPage
+  )
 
   return (
     <>
+      {accionesPlantillas.map(({ import: modulo }, i) => {
+        const Componente = modulo.default
+        return <Componente key={i} />
+      })}
       <OLRow className="gallery-container">
         {currentTemplates.length > 0 ? (
           currentTemplates.map(p => (
@@ -59,7 +66,11 @@ export default function TemplateGallery() {
           </OLRow>
         )}
       </OLRow>
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </>
   )
 }

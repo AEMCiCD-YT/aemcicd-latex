@@ -666,5 +666,515 @@
       "pregunta": "¿Dónde encuentro los pasos y términos del programa?"
     },
     "archivos": {}
+  },
+  {
+    "id": "fase3-bibliografia_verificada-1",
+    "tipo": "fase3",
+    "funcion": "bibliografia_verificada",
+    "entrada": {
+      "pregunta": "Selecciona fuentes sobre la estructura del ADN.",
+      "dois": ["10.1038/171737a0"],
+      "archivoBib": "referencias.bib"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "referencias": [
+      {
+        "doi": "10.1038/171737a0",
+        "clave": "adn",
+        "titulo": "Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid",
+        "bibtex": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+      }
+    ]
+  },
+  {
+    "id": "fase3-bibliografia_verificada-2",
+    "tipo": "fase3",
+    "funcion": "bibliografia_verificada",
+    "entrada": {
+      "pregunta": "Explica qué información del DOI se verificó y qué requiere lectura.",
+      "dois": ["10.1038/171737a0"],
+      "archivoBib": "referencias.bib"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "referencias": [
+      {
+        "doi": "10.1038/171737a0",
+        "clave": "adn",
+        "titulo": "Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid",
+        "bibtex": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+      }
+    ]
+  },
+  {
+    "id": "fase3-bibliografia_verificada-3",
+    "tipo": "fase3",
+    "funcion": "bibliografia_verificada",
+    "entrada": {
+      "pregunta": "¿Sirve esta referencia como evidencia de una conclusión experimental no descrita?",
+      "dois": ["10.1038/171737a0"],
+      "archivoBib": "referencias.bib"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "referencias": [
+      {
+        "doi": "10.1038/171737a0",
+        "clave": "adn",
+        "titulo": "Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid",
+        "bibtex": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+      }
+    ]
+  },
+  {
+    "id": "fase3-citas_faltantes-1",
+    "tipo": "fase3",
+    "funcion": "citas_faltantes",
+    "entrada": {
+      "pregunta": "Identifica afirmaciones sin respaldo."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-citas_faltantes-2",
+    "tipo": "fase3",
+    "funcion": "citas_faltantes",
+    "entrada": {
+      "pregunta": "Revisa la clave inexistente y no inventes una fuente."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-citas_faltantes-3",
+    "tipo": "fase3",
+    "funcion": "citas_faltantes",
+    "entrada": {
+      "pregunta": "Propón citar una entrada existente solo donde respalde la afirmación."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-chat_pdf-1",
+    "tipo": "fase3",
+    "funcion": "chat_pdf",
+    "entrada": {
+      "pregunta": "¿Qué método se describe y en qué página?",
+      "pdfs": ["estudio.pdf"]
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "pdfs": {
+      "estudio.pdf": [
+        "Se realizó un ajuste lineal de temperatura frente al tiempo.",
+        "Solo se midieron cinco puntos. No se estimó un intervalo de confianza."
+      ]
+    }
+  },
+  {
+    "id": "fase3-chat_pdf-2",
+    "tipo": "fase3",
+    "funcion": "chat_pdf",
+    "entrada": {
+      "pregunta": "¿Se informa un intervalo de confianza? Si no consta, dilo.",
+      "pdfs": ["estudio.pdf"]
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "pdfs": {
+      "estudio.pdf": [
+        "Se realizó un ajuste lineal de temperatura frente al tiempo.",
+        "Solo se midieron cinco puntos. No se estimó un intervalo de confianza."
+      ]
+    }
+  },
+  {
+    "id": "fase3-chat_pdf-3",
+    "tipo": "fase3",
+    "funcion": "chat_pdf",
+    "entrada": {
+      "pregunta": "Compara el método con la limitación indicada y cita páginas.",
+      "pdfs": ["estudio.pdf"]
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "pdfs": {
+      "estudio.pdf": [
+        "Se realizó un ajuste lineal de temperatura frente al tiempo.",
+        "Solo se midieron cinco puntos. No se estimó un intervalo de confianza."
+      ]
+    }
+  },
+  {
+    "id": "fase3-tutor_latex-1",
+    "tipo": "fase3",
+    "funcion": "tutor_latex",
+    "entrada": {
+      "pregunta": "Enséñame a usar label y ref con un ejercicio."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-tutor_latex-2",
+    "tipo": "fase3",
+    "funcion": "tutor_latex",
+    "entrada": {
+      "pregunta": "Explica la diferencia entre align y equation."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-tutor_latex-3",
+    "tipo": "fase3",
+    "funcion": "tutor_latex",
+    "entrada": {
+      "pregunta": "Guíame para entender una cita de BibLaTeX, sin hacer mi tarea."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-resumen_cambios-1",
+    "tipo": "fase3",
+    "funcion": "resumen_cambios",
+    "entrada": {
+      "pregunta": "Resume las diferencias y archivos afectados.",
+      "desdeVersion": 1,
+      "hastaVersion": 3
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "historial": {
+      "desde": 1,
+      "hasta": 3,
+      "cambios": [
+        {
+          "archivo": "main.tex",
+          "operacion": "edited",
+          "diferencias": [
+            {
+              "d": "Se midió una vez.",
+              "i": "Se repitió la medición cinco veces."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "fase3-resumen_cambios-2",
+    "tipo": "fase3",
+    "funcion": "resumen_cambios",
+    "entrada": {
+      "pregunta": "Separa adiciones y eliminaciones sin atribuir autoría.",
+      "desdeVersion": 1,
+      "hastaVersion": 3
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "historial": {
+      "desde": 1,
+      "hasta": 3,
+      "cambios": [
+        {
+          "archivo": "main.tex",
+          "operacion": "edited",
+          "diferencias": [
+            {
+              "d": "Se midió una vez.",
+              "i": "Se repitió la medición cinco veces."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "fase3-resumen_cambios-3",
+    "tipo": "fase3",
+    "funcion": "resumen_cambios",
+    "entrada": {
+      "pregunta": "Indica qué conviene revisar antes de entregar.",
+      "desdeVersion": 1,
+      "hastaVersion": 3
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    },
+    "historial": {
+      "desde": 1,
+      "hasta": 3,
+      "cambios": [
+        {
+          "archivo": "main.tex",
+          "operacion": "edited",
+          "diferencias": [
+            {
+              "d": "Se midió una vez.",
+              "i": "Se repitió la medición cinco veces."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "fase3-revision_equipo-1",
+    "tipo": "fase3",
+    "funcion": "revision_equipo",
+    "entrada": {
+      "pregunta": "Revisa contradicciones entre capítulos."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-revision_equipo-2",
+    "tipo": "fase3",
+    "funcion": "revision_equipo",
+    "entrada": {
+      "pregunta": "Señala duplicaciones sin juzgar personas."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-revision_equipo-3",
+    "tipo": "fase3",
+    "funcion": "revision_equipo",
+    "entrada": {
+      "pregunta": "Propón tareas concretas de coordinación basadas en el texto."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-beamer-1",
+    "tipo": "fase3",
+    "funcion": "beamer",
+    "entrada": {
+      "pregunta": "Crea una presentación breve sin inventar resultados."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-beamer-2",
+    "tipo": "fase3",
+    "funcion": "beamer",
+    "entrada": {
+      "pregunta": "Prepara cinco diapositivas con limitaciones explícitas."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-beamer-3",
+    "tipo": "fase3",
+    "funcion": "beamer",
+    "entrada": {
+      "pregunta": "Presenta el método y deja claro qué mediciones faltan."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-poster-1",
+    "tipo": "fase3",
+    "funcion": "poster",
+    "entrada": {
+      "pregunta": "Crea un póster con objetivo, método y limitaciones."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-poster-2",
+    "tipo": "fase3",
+    "funcion": "poster",
+    "entrada": {
+      "pregunta": "Prepara un póster de lectura a distancia sin inventar figuras."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-poster-3",
+    "tipo": "fase3",
+    "funcion": "poster",
+    "entrada": {
+      "pregunta": "Usa beamerposter y conserva las unidades del texto."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-coherencia_notacion-1",
+    "tipo": "fase3",
+    "funcion": "coherencia_notacion",
+    "entrada": {
+      "pregunta": "Revisa t y T entre capítulos."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-coherencia_notacion-2",
+    "tipo": "fase3",
+    "funcion": "coherencia_notacion",
+    "entrada": {
+      "pregunta": "Revisa unidades sin certificar los cálculos."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-coherencia_notacion-3",
+    "tipo": "fase3",
+    "funcion": "coherencia_notacion",
+    "entrada": {
+      "pregunta": "Señala ambigüedad de símbolos y explica cambios mínimos."
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}"
+    }
+  },
+  {
+    "id": "fase3-codigo_algoritmo-1",
+    "tipo": "fase3",
+    "funcion": "codigo_algoritmo",
+    "entrada": {
+      "pregunta": "Convierte la selección de Python a algorithm2e.",
+      "archivo": "algoritmo.py",
+      "desde": 0,
+      "hasta": 94,
+      "seleccion": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}",
+      "algoritmo.py": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    }
+  },
+  {
+    "id": "fase3-codigo_algoritmo-2",
+    "tipo": "fase3",
+    "funcion": "codigo_algoritmo",
+    "entrada": {
+      "pregunta": "Convierte el código en un listado con listings e indica el paquete.",
+      "archivo": "algoritmo.py",
+      "desde": 0,
+      "hasta": 94,
+      "seleccion": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}",
+      "algoritmo.py": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    }
+  },
+  {
+    "id": "fase3-codigo_algoritmo-3",
+    "tipo": "fase3",
+    "funcion": "codigo_algoritmo",
+    "entrada": {
+      "pregunta": "Conserva el caso de entrada vacía y explica el flujo sin ejecutarlo.",
+      "archivo": "algoritmo.py",
+      "desde": 0,
+      "hasta": 94,
+      "seleccion": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{Método}\nSe midió el tiempo t en segundos. No se calcularon intervalos de confianza.\\cite{inexistente}\n\\input{discusion}\n\\end{document}",
+      "discusion.tex": "Se representa el tiempo con T, en milisegundos.",
+      "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}",
+      "algoritmo.py": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
+    }
   }
 ]

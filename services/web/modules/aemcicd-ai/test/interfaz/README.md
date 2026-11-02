@@ -94,3 +94,39 @@ distintas ni history-ot en esta instancia (el banco sí cubre ambas variantes de
 No confundas estas pruebas con llamadas reales a Azure ni con un despliegue.
 
 Evidencia de fase 2 en [`aemcicd/docs/ia-fase-2/`](../../../../../../aemcicd/docs/ia-fase-2/).
+
+## Fase 3
+
+El mismo banco incluye las acciones nuevas y admite una batería adicional:
+
+```bash
+AEMCICD_IA_DEPS=/tmp/aemcicd-ia-pruebas CHROME=/opt/google/chrome/chrome node services/web/modules/aemcicd-ai/test/interfaz/fase3.mjs
+```
+
+Para una instancia completa desechable, construye la imagen como `aemcicd-latex:ia-fase-3`
+o define `AEMCICD_IA_IMAGEN` con la candidata que quieres comprobar. No se usan claves reales:
+
+```bash
+docker compose -p aemcicd-ia-fase3 -f services/web/modules/aemcicd-ai/test/interfaz/compose-fase3.yml up -d mongo redis
+docker compose -p aemcicd-ia-fase3 -f services/web/modules/aemcicd-ai/test/interfaz/compose-fase3.yml exec -T mongo mongosh --quiet --eval 'try {rs.status()} catch {rs.initiate({_id:"overleaf",members:[{_id:0,host:"mongo:27017"}]})}'
+docker compose -p aemcicd-ia-fase3 -f services/web/modules/aemcicd-ai/test/interfaz/compose-fase3.yml up -d web
+```
+
+Espera a que `http://localhost:18183/status` responda. Prepara después el usuario y los datos
+ficticios (el script de usuario rechaza un entorno que no tenga URL local y claves falsas):
+
+```bash
+docker cp services/web/modules/aemcicd-ai/test/interfaz/crear-usuario-fase3.mjs aemcicd-ia-fase3-web-1:/overleaf/services/web/modules/aemcicd-ai/test/interfaz/crear-usuario-fase3.mjs
+docker exec aemcicd-ia-fase3-web-1 bash -lc 'source /etc/overleaf/env.sh && cd /overleaf/services/web && node modules/aemcicd-ai/test/interfaz/crear-usuario-fase3.mjs'
+node services/web/modules/aemcicd-ai/test/interfaz/preparar-fase3.mjs
+AEMCICD_IA_DEPS=/tmp/aemcicd-ia-pruebas CHROME=/opt/google/chrome/chrome node services/web/modules/aemcicd-ai/test/interfaz/fase3-overleaf.mjs
+```
+
+`fase3-overleaf.mjs` solo admite `localhost:18183` y el contenedor desechable indicado. Comprueba
+lecturas reales de PDF/historial, una consulta de metadatos a Crossref, estimaciones, permisos de
+pertenencia, guardado nativo y Word. No llama a modelos; crea un evento de autorización sintético
+sin contenido en su Mongo local. Sus resultados y sesiones de prueba quedan en `/tmp/ia-fase3-overleaf`,
+no en el repositorio. La sesión no debe copiarse a producción ni publicarse.
+
+Las capturas que se entregan están en
+[`ia-fase-3/capturas`](../../../../../../aemcicd/docs/ia-fase-3/capturas/).

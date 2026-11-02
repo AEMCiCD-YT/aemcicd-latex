@@ -70,6 +70,8 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
   const accion = route.request().url().split('/').at(-1)
   const body =
     route.request().method() === 'POST' ? route.request().postDataJSON() : null
+  if (accion === 'archivos')
+    return route.fulfill({ json: { pdfs: [], bibliografias: [] } })
   if (accion === 'instrucciones')
     return route.fulfill({
       json: body ? { id: 'doc-main' } : { existe: false },

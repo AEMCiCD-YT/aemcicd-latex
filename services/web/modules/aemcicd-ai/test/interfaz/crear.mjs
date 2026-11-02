@@ -29,6 +29,8 @@ const adaptadores = [
   'modals-context',
   'tracked-deletes',
   'history-ot',
+  'use-root-doc',
+  'layout-context',
 ]
 const componentes = {
   'ol-button': 'Boton',
@@ -67,6 +69,8 @@ await build({
         }))
         b.onResolve({ filter: /^@\// }, args => {
           const nombre = args.path.split('/').at(-1)
+          if (nombre === 'use-convert-project')
+            return { path: 'Convertir', namespace: 'banco' }
           if (nombre === 'meta') return { path: join(aqui, 'meta.ts') }
           if (nombre === 'pdf-js') return { path: join(aqui, 'pdf.ts') }
           if (nombre === 'error-boundary')

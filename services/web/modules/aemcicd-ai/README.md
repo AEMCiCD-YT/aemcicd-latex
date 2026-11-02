@@ -109,6 +109,56 @@ La IA permanece habilitada para estudiantes mediante `AEMCICD_AI_ENABLED=true` y
 `AEMCICD_AI_ONLY_ADMINS=false`, conservados en la configuración versionada de `latex-server`.
 Cada estudiante debe activarla en su panel antes de consultar.
 
+## Fase 3: investigación, aprendizaje y trabajo en equipo
+
+Implementada en `ia-fase-3`, todavía sin despliegue. Es la última fase prevista, no una nueva
+base del asistente. Conserva proveedores, crédito, topes, eventos sin contenido y revisión humana.
+
+| Función                   | Nivel      | Interfaz                                                                                                                                 |
+| ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `bibliografia_verificada` | `rapido`   | Investigación y PDF: tema o hasta cinco DOI, y `.bib` propio; consulta Crossref, verifica DOI y propone BibTeX construido en el servidor |
+| `citas_faltantes`         | `rapido`   | Investigación y PDF: revisa respaldo y claves; rechaza claves de cita literales nuevas que no existen en los `.bib` enviados             |
+| `chat_pdf`                | `proyecto` | Selector de hasta tres PDF propios; texto extraído en el servidor y etiquetado por ruta/página, sin OCR ni lectura de figuras            |
+| `tutor_latex`             | `rapido`   | Modo Aprender LaTeX y menú de selección; explicación, ejemplo y ejercicio                                                                |
+| `resumen_cambios`         | `rapido`   | Botón junto al Historial o intervalo en el panel; diferencias nativas sin metadatos de autores                                           |
+| `revision_equipo`         | `proyecto` | Equipo y notación; comentarios revisables con las mismas comprobaciones del jurado                                                       |
+| `beamer`, `poster`        | `proyecto` | Presentar y exportar; propuestas de archivo nuevo, sin sobrescribir el original                                                          |
+| `coherencia_notacion`     | `proyecto` | Equipo y notación; propuestas mínimas sujetas a revisión                                                                                 |
+| `codigo_algoritmo`        | `rapido`   | Menú de selección; documento `.tex` nuevo con `algorithm2e` o `listings`, conservando el código original                                 |
+
+PDF, historial y bibliografía usan `usaContexto`; el proyecto completo conserva `usaProyecto`.
+Ambos pasan por la estimación y confirmación del servicio común. Las etiquetas `pagina_pdf`,
+`historial` y `referencias_verificadas` tienen el mismo tratamiento de datos no confiables.
+Crossref recibe solo el tema o los DOI escritos, nunca archivos ni identificadores añadidos
+por el módulo. No se consulta doi.org ni una URL devuelta por el proveedor. No hay búsqueda web
+de pago, ni llamadas al AI SDK fuera de `servicio.consultar()` en la aplicación.
+
+Un PDF tiene como máximo 10 MiB, 100 páginas y 500 000 caracteres extraídos; el conjunto conserva
+el límite configurable de tokens del proyecto. Un PDF sin texto se rechaza con aviso de OCR.
+El historial limita el intervalo a 500 versiones, 20 archivos y 200 000 caracteres. No se recorta
+silenciosamente; para archivos binarios y eliminados solo se comunica la operación.
+
+Los documentos generados (Beamer, póster y código a algoritmo) devuelven `{explicacion,contenido}`. El servidor verifica el tipo de documento
+LaTeX y deriva el nombre de su evento. «Guardar como archivo nuevo» exige escritura y un evento
+propio de esa función y proyecto. Usa `EditorController.addDoc`, nunca una escritura de documento
+en Mongo. El guardado se registra como metadatos; el contenido pertenece al proyecto y su historial.
+«Descartar» no crea archivos. Un archivo existente con contenido distinto no se sobrescribe.
+
+**Word** usa `useConvertProject` de Overleaf y descarga un DOCX mediante CLSI/Pandoc. **Plantillas**
+se muestran en la galería nativa y crean un proyecto nuevo con `createProjectFromSnippet`; no
+consumen crédito de IA. Son seis estructuras iniciales, no formatos oficiales de carreras o revistas.
+La imagen habilita la galería; puede deshabilitarse explícitamente con `OVERLEAF_TEMPLATE_GALLERY=false`.
+
+Rutas añadidas (sesión y CSRF en las escrituras; permisos nativos sobre el proyecto):
+
+- `GET /project/:id/aemcicd-ai/archivos`: rutas PDF y `.bib`, sin contenido; lectura.
+- `POST /project/:id/aemcicd-ai/bibliografia`: crear `referencias.bib` si falta; escritura.
+- `POST /project/:id/aemcicd-ai/documento`: guardar Beamer/póster/algoritmo tras decisión del estudiante; escritura.
+- `GET /aemcicd-ai/plantillas`: catálogo inicial, con sesión.
+- `POST /aemcicd-ai/plantillas/:plantilla`: proyecto nuevo del usuario autenticado, con límite por minuto.
+
+[Pruebas, capturas y límites](../../../../aemcicd/docs/ia-fase-3/verificacion.md).
+
 ## Propuestas verificables
 
 Las funciones de cambios devuelven exclusivamente JSON:

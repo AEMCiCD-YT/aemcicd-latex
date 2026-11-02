@@ -76,6 +76,8 @@ export const useEditorPropertiesContext = () => ({ showVisual: false })
 export const useEditorManagerContext = () => ({
   openDocs: { awaitBufferedOps: async () => {} },
   openDocWithId: async (id: string) => {
+    if (id === 'generado')
+      return Object.assign(window, { generadoAbierto: true })
     if (id !== 'doc-main')
       throw new Error('El archivo no existe en el banco de prueba.')
   },
@@ -208,3 +210,10 @@ export function Tooltip({ children }: PropsWithChildren) {
 export function Cabecera({ title }: { title: string }) {
   return <h2>{title}</h2>
 }
+
+export const useRootDoc = () => () => ({ rootResourcePath: 'main.tex' })
+export const useLayoutContext = () => ({
+  setView: (vista: string) => Object.assign(window, { vistaElegida: vista }),
+})
+export const Convertir = () => async () =>
+  Object.assign(window, { wordSolicitado: true })

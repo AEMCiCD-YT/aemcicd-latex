@@ -23,6 +23,16 @@ El código modificado se publica aquí, como pide la AGPL, y el pie de página d
 | Fase 2: explicar la exportación ZIP de Prism usando la subida nativa                                                                                                                                         | `services/web/frontend/js/features/project-list/components/new-project-button/upload-project-modal.tsx` (prop opcional `descripcion`)                |
 | El envío de correo ya no escribe la configuración SMTP (con la contraseña) en el log                                                                                                                         | `app/src/Features/Email/EmailSender.mjs`                                                                                                             |
 
+Fuera del módulo, la fase 3 modifica:
+
+| Archivo                                                                                                       | Motivo                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services/web/config/settings.defaults.js`                                                                    | Registrar las extensiones `historyToolbarActionComponents` y `templateGalleryActionComponents`                                                |
+| `services/web/frontend/js/features/history/components/diff-view/toolbar/toolbar.tsx`                          | Renderizar la acción de IA con el intervalo de versiones seleccionado, sin sustituir el historial                                             |
+| `services/web/modules/template-gallery/frontend/js/features/template-gallery/components/template-gallery.tsx` | Mostrar los puntos de partida del programa dentro de la galería nativa                                                                        |
+| `services/web/package.json`                                                                                   | Pasar `pdfjs-dist` 5.1.91 de desarrollo a producción para extraer texto en el servidor; misma versión y resolución, sin regenerar `yarn.lock` |
+| `aemcicd/Dockerfile`                                                                                          | Habilitar la galería nativa mediante `OVERLEAF_TEMPLATE_GALLERY=true`, sobrescribible en ejecución                                            |
+
 Los textos concretos, como el pie, el aviso de suspensión y la URL del logo, se configuran en
 `latex-server/personalizacion/variables.env`, no aquí.
 
@@ -33,9 +43,13 @@ panel en el editor; fase 1 desplegada: diagnósticos, escritura, visión, contex
 del proyecto, instrucciones y propuestas aplicables; fase 2: seguimiento, revisión, importación,
 declaración y gráficas, con soporte y panel agregado en la plataforma). Documentación en su [README](../services/web/modules/aemcicd-ai/README.md);
 Estado: base y fases 1 y 2 en producción, IA disponible para estudiantes con activación individual;
-fase 3 planificada. [Despliegue y límites de verificación](docs/ia-fase-2/despliegue.md).
+fase 3 implementada para revisión en `ia-fase-3`, todavía sin desplegar. [Despliegue y límites de verificación](docs/ia-fase-2/despliegue.md).
 Diseño en [`docs/ia-diseno.md`](docs/ia-diseno.md); evaluación comparativa de modelos en
 [`ia-eval/`](ia-eval/README.md).
+
+La fase 3 incorpora bibliografía, citas, PDF, tutor, historial, equipo, presentaciones y
+notación; la descarga Word y las plantillas usan capacidades nativas, sin modelo.
+[Validación y límites de fase 3](docs/ia-fase-3/verificacion.md).
 
 ## Imagen
 

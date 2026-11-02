@@ -1,6 +1,6 @@
 # IA en LaTeX AEMCiCD: documento de diseño
 
-**Estado:** fase base y fases 1 y 2 desplegadas en producción. IA habilitada para estudiantes, con activación individual opcional. La fase 3 sigue planificada; no hay una fase 4 definida.
+**Estado:** fase base y fases 1 y 2 desplegadas en producción. IA habilitada para estudiantes, con activación individual opcional. La fase 3 está implementada para revisión en `ia-fase-3`, sin despliegue; es la última fase prevista. No hay una fase 4 definida.
 **Actualizado:** 2 de noviembre de 2026.
 **Evidencia:** [despliegue y comprobaciones de producción](ia-fase-2/despliegue.md).
 **Alcance:** servidor `latex.aemcicd.org` (este fork de Overleaf Extended CE) y la plataforma
@@ -136,7 +136,7 @@ propuestas enviadas a revisión, observaciones publicadas y scripts guardados; n
 aceptación posterior ni certifica que estén en la versión final. La declaración lo explica y pide
 ajustarla a los usos efectivamente incorporados.
 
-### Fase 3: próximo semestre (enero y febrero)
+### Fase 3: última fase (implementada para revisión)
 
 - **Investigación** (área 4): bibliografía verificada contra el DOI, citas faltantes, chat con
   los PDF del proyecto.
@@ -147,6 +147,36 @@ ajustarla a los usos efectivamente incorporados.
   exportar a Word.
 - **Matemáticas y ciencia** (área 8): coherencia de notación entre capítulos; de código (Python,
   C) a pseudocódigo con `algorithm2e` o a listado formateado.
+
+La implementación añade diez funciones a `FUNCIONES`: `bibliografia_verificada`,
+`citas_faltantes`, `chat_pdf`, `tutor_latex`, `resumen_cambios`, `revision_equipo`, `beamer`,
+`poster`, `coherencia_notacion` y `codigo_algoritmo`. Todas pasan por `servicio.consultar()`.
+PDF, historial, bibliografía y proyecto muestran una estimación antes de llamar al modelo.
+
+La búsqueda usa únicamente Crossref, no una herramienta web de pago del modelo. Verifica el
+DOI y sus metadatos; no certifica la calidad del artículo ni que sustente una afirmación. Solo
+el tema o los DOI escritos se envían a Crossref, con destino fijo, sin redirecciones y con
+límites de tiempo/tamaño. El servidor construye el BibTeX y el estudiante decide añadirlo al
+`.bib`. Una referencia ausente en Crossref no se sustituye por una inventada.
+
+El chat extrae texto de hasta tres PDF del árbol autorizado (10 MiB y 100 páginas por PDF),
+etiquetado con ruta y página. No hace OCR ni interpreta figuras. No recorta en silencio: si
+se supera el límite, rechaza la consulta antes del modelo. El historial procede de las API
+nativas y de un intervalo elegido por el estudiante; elimina metadatos de identidad antes de
+formar el contexto. Los archivos binarios o eliminados se describen por su operación; no se
+inventa su contenido.
+
+Beamer, póster y código a algoritmo usan `{explicacion,contenido}` y se guardan, solo tras confirmación, como
+`ia-generados/TIPO-EVENTO.tex`, por la misma vía de creación de archivos del editor. Nunca
+reemplazan el original ni un archivo generado que ya tenga contenido distinto. Las plantillas
+son seis puntos de partida editables en la galería nativa, no formatos oficiales de carreras.
+La imagen habilita `OVERLEAF_TEMPLATE_GALLERY=true`, sobrescribible en ejecución. Word reutiliza
+la conversión nativa de Pandoc sin modelo ni consumo de crédito de IA.
+
+La plataforma y `latex-sync` amplían sus listas cerradas de funciones para admitir estos
+agregados sin permitir contenido ni identificadores adicionales. Los términos 1.3 se preparan
+en el PR complementario para informar de Crossref y del texto de PDF; producción conserva 1.2
+hasta que se publique esa revisión. [Comprobación y límites de fase 3](ia-fase-3/verificacion.md).
 
 ### Fuera de alcance
 
@@ -243,11 +273,11 @@ En ambos:
 
 ### Asignación (tras la evaluación del 1 de noviembre de 2026)
 
-| Nivel                            | Funciones                                                                                                                           | Modelo principal                  | Alternativa                       |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------- |
-| **Rápido**                       | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, de código a algoritmo, resumen del historial | GPT-6.1 Terra, esfuerzo bajo      | Claude Haiku 5.5, esfuerzo bajo   |
-| **Avanzado, proyecto completo**  | Chat con el proyecto, revisor tipo jurado, coherencia de notación, Beamer y pósteres, importaciones                                 | GPT-6.1 Terra, esfuerzo medio     | Claude Sonnet 5.5, esfuerzo medio |
-| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin                                                              | Claude Sonnet 5.5, esfuerzo medio | GPT-6.1 Sol, esfuerzo medio       |
+| Nivel                            | Funciones                                                                                                                                                                 | Modelo principal                  | Alternativa                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------- |
+| **Rápido**                       | Errores y advertencias, fórmulas desde texto, tablas desde Excel, ortografía, soporte, bibliografía, citas faltantes, tutor, de código a algoritmo, resumen del historial | GPT-6.1 Terra, esfuerzo bajo      | Claude Haiku 5.5, esfuerzo bajo   |
+| **Avanzado, proyecto completo**  | Chat con el proyecto, revisor tipo jurado, coherencia de notación, chat con PDF, revisión del equipo, Beamer y pósteres, importaciones                                    | GPT-6.1 Terra, esfuerzo medio     | Claude Sonnet 5.5, esfuerzo medio |
+| **Avanzado, escritura y visión** | Reescribir selección, esqueletos, foto a LaTeX, gráficas estilo Origin                                                                                                    | Claude Sonnet 5.5, esfuerzo medio | GPT-6.1 Sol, esfuerzo medio       |
 
 El **esfuerzo** es cuánto razona el modelo antes de responder. Ese razonamiento no se ve, pero se
 cobra como salida: Claude Haiku 5.5 y Sonnet 5.5 razonan por defecto (medio y alto).
@@ -307,9 +337,9 @@ nivel.
 | Claude Sonnet 5.5 | $2,00   | $0,20            | $10,00 |
 
 Precios de lista de noviembre de 2026; en OpenAI, hasta 272 000 tokens de entrada por consulta.
-La búsqueda web (bibliografía, fase 3) cuesta unos $10 por cada 1.000 búsquedas y también se
-descuenta del crédito. Los precios se guardan en la configuración del módulo para actualizarlos
-sin cambiar código.
+La bibliografía de fase 3 consulta metadatos públicos de Crossref, sin una herramienta web
+de pago del modelo. Esa consulta no consume crédito de IA; la selección y explicación del
+modelo sí se cobran por su uso real.
 
 ### Dos fuentes de crédito
 
@@ -489,8 +519,9 @@ del funcionamiento no sustituye una revisión jurídica del programa.
 - **Permisos:** cada ruta comprueba sesión, token CSRF y permiso sobre el proyecto. Quien solo
   puede leer un proyecto puede preguntar, pero no aplicar cambios.
 - **Contenido no confiable:** un documento puede traer texto escrito para manipular a la IA. El
-  contenido va marcado como datos; la IA no ejecuta nada, no tiene acceso a la red salvo la
-  búsqueda web de la fase 3, y toda modificación necesita la aprobación del estudiante.
+  contenido va marcado como datos; la IA no ejecuta nada ni tiene herramientas de red. El servidor
+  consulta Crossref solo a petición del estudiante y con el tema o los DOI escritos. Toda
+  modificación necesita la aprobación del estudiante.
 - **Scripts de Python:** se ejecutan solo en el navegador del estudiante (Pyodide), cuando él lo
   pide.
 - **Abuso:** tamaño máximo por consulta, una consulta a la vez por estudiante y límite por minuto,
@@ -545,5 +576,6 @@ Contenido de los términos y del aviso:
 1. Completar la evaluación de calidad de las funciones de fase 2 con proveedores reales.
 2. Comprobar colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
 3. Revisar periódicamente las políticas de retención, los presupuestos y las métricas del piloto.
-4. Implementar la fase 3. Las claves, la ejecución explícita de Pyodide y el envío de totales ya
+4. Revisar y desplegar coordinadamente la fase 3, la lista de funciones del conector y la
+   plataforma, y los términos 1.3. Las claves, la ejecución explícita de Pyodide y el envío de totales ya
    están configurados o comprobados; no son pendientes de implantación.

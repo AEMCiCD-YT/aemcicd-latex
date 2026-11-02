@@ -39,6 +39,36 @@ export default {
       AuthorizationMiddleware.ensureUserCanWriteProjectContent,
     ]
 
+    webRouter.get(
+      '/aemcicd-ai/plantillas',
+      login,
+      general,
+      AiController.plantillas
+    )
+    webRouter.post(
+      '/aemcicd-ai/plantillas/:plantilla',
+      login,
+      RateLimiterMiddleware.rateLimit(limiteConsultas),
+      AiController.crearDesdePlantilla
+    )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/bibliografia',
+      ...escribir,
+      general,
+      AiController.crearBib
+    )
+    webRouter.get(
+      '/project/:Project_id/aemcicd-ai/archivos',
+      ...leer,
+      general,
+      AiController.archivosFase3
+    )
+    webRouter.post(
+      '/project/:Project_id/aemcicd-ai/documento',
+      ...escribir,
+      general,
+      AiController.guardarGenerado
+    )
     webRouter.get('/aemcicd-ai/estado', login, general, AiController.estado)
     webRouter.get(
       '/aemcicd-ai/soporte/sesion',

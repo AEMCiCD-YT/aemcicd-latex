@@ -1,3 +1,7 @@
+import importOverleafModules from '../../../../../../macros/import-overleaf-module.macro'
+const accionesHistorial = importOverleafModules(
+  'historyToolbarActionComponents'
+)
 import type { Nullable } from '../../../../../../../types/utils'
 import type { Diff } from '../../../services/types/doc'
 import type { HistoryContextValue } from '../../../context/types/history-context-value'
@@ -38,6 +42,10 @@ export default function Toolbar({
   return (
     <div className="history-react-toolbar">
       <ToolbarDatetime selection={selection} />
+      {accionesHistorial.map(({ import: modulo }, i) => {
+        const Componente = modulo.default
+        return <Componente key={i} selection={selection} />
+      })}
       {selection.selectedFile?.pathname ? (
         <ToolbarFileInfo diff={diff} selection={selection} />
       ) : null}
