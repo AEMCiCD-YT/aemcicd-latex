@@ -1,7 +1,8 @@
 # IA en LaTeX AEMCiCD: documento de diseño
 
-**Estado:** fase base en producción; fase 1 implementada en la rama `ia-fase-1`, pendiente de revisión y despliegue. Las fases 2 y 3 siguen siendo planificación.
-**Fecha:** 1 de noviembre de 2026.
+**Estado:** fase base y fases 1 y 2 desplegadas en producción. IA habilitada para estudiantes, con activación individual opcional. La fase 3 sigue planificada; no hay una fase 4 definida.
+**Actualizado:** 2 de noviembre de 2026.
+**Evidencia:** [despliegue y comprobaciones de producción](ia-fase-2/despliegue.md).
 **Alcance:** servidor `latex.aemcicd.org` (este fork de Overleaf Extended CE) y la plataforma
 `plataforma.aemcicd.org` (panel del Programa LaTeX).
 
@@ -24,8 +25,8 @@ antes de esa fecha para recibir a quienes se queden sin herramienta.
 | Modelos             | Mezcla aproximada **80 % modelos rápidos / 20 % modelos avanzados**, elegida por función (sección 5). Rápidos: Claude Haiku 5.5 y GPT-6 Luna. Avanzados: Claude Sonnet 5.5, GPT-6.1 Terra y GPT-6.1 Sol. No se usan Opus ni GPT-6 Astra.                                     |
 | Crédito             | **$1 de IA por estudiante al mes**, medido por **costo real** (no por número de consultas), con **barra de saldo** visible. Se reinicia el día 1 de cada mes y no se acumula.                                                                                                |
 | Precio del programa | Sin cambios: $2/mes o $10/semestre.                                                                                                                                                                                                                                          |
-| Uso opcional        | La IA se activa por estudiante, tras leer un aviso corto. Quien no la activa no envía nada a Anthropic.                                                                                                                                                                      |
-| Datos               | Solo análisis interno de uso, sin contenido. **No se venden ni se entregan a nadie**, tampoco a la universidad (sección 9).                                                                                                                                                  |
+| Uso opcional        | La IA se activa por estudiante, tras leer un aviso corto. Quien no la activa no envía consultas a los proveedores de IA.                                                                                                                                                     |
+| Datos               | Solo análisis interno de uso, sin contenido. **Las métricas no se venden ni se entregan a terceros**, tampoco a la universidad. El contexto de cada consulta sí se procesa por el proveedor de IA elegido (sección 9).                                                       |
 | Soporte             | Asistente de soporte en la plataforma y en el editor; **no** en WhatsApp.                                                                                                                                                                                                    |
 
 ## 3. Funciones y fases
@@ -53,7 +54,7 @@ de soporte y la medición del piloto.
 - **👍/👎** en cada respuesta y eventos de medición sin contenido (área 12).
 - Interruptor para apagar la IA en todo el servidor sin reinstalar.
 
-### Fase 1: piloto (mediados de noviembre; implementada para revisión)
+### Fase 1: piloto (desplegada)
 
 **Área 1, ayuda con LaTeX**
 
@@ -97,18 +98,19 @@ el PDF original. Los proyectos completos tienen un límite configurable de 150 0
 estimados; si se excede, no se envía un contexto parcial. La estimación incluye la alternativa
 y se vuelve a comprobar al confirmar; un costo mayor requiere una nueva confirmación.
 
-La verificación local cubre Mongo temporal, peticiones HTTP simuladas a los proveedores y un
-banco de interfaz con componentes reales y CodeMirror. Sigue pendiente la integración en una
-instancia completa de Overleaf con Mongo/Redis/ShareJS y la prueba con las API reales. Las
-capturas y comandos reproducibles se documentan en `services/web/modules/aemcicd-ai/test/interfaz/`.
+La verificación local cubre Mongo temporal, peticiones HTTP simuladas y componentes reales;
+la fase 2 amplía la comprobación a Overleaf completo con Mongo/Redis y colaboración entre
+pestañas. En producción se comprobaron arranque, importación Word y compilación PDF. Siguen
+pendientes la batería con las API reales y la colaboración entre cuentas distintas. Las
+capturas y comandos están en `services/web/modules/aemcicd-ai/test/interfaz/` y en la
+[comprobación de fase 2](ia-fase-2/verificacion.md).
 
-### Fase 2: antes del 1 de enero (diciembre)
+### Fase 2: desplegada el 2 de noviembre de 2026
 
-**Implementada para revisión en `ia-fase-2`**, con plataforma en PR complementario. No implica
-publicación ni despliegue. Evidencia y límites en [la comprobación de fase 2](ia-fase-2/verificacion.md).
-La sincronización automática del resumen mediante `latex-sync` requiere un cambio aparte en
-`latex-server`; mientras ese repositorio siga fuera del alcance, se usa la consulta administradora
-desde la plataforma o la carga de `ia-resumen`.
+Unida a `ext-ce` y desplegada como imagen `a5`, junto con la plataforma y el conector de
+`latex-server`. `latex-sync` envía automáticamente el mes actual y el anterior cada cinco
+minutos aproximadamente; se confirmó su recepción en producción. Evidencia y límites en
+[la comprobación local](ia-fase-2/verificacion.md) y [el despliegue](ia-fase-2/despliegue.md).
 
 - **Cambios con seguimiento** (área 2): la IA propone sus cambios como cambios con seguimiento
   del módulo `track-changes`; el estudiante y sus compañeros los aceptan o rechazan uno por uno.
@@ -433,9 +435,16 @@ Solo lo necesario para cada consulta: la selección, los archivos o el log que u
 instrucciones del proyecto y, en su caso, la imagen. Solo de estudiantes que activaron la IA, y
 solo al proveedor que atienda esa consulta.
 
-Según los términos comerciales de ambos API, estos datos no se usan para entrenar sus modelos. La
-retención vigente de cada proveedor se revisará y se citará en el aviso de privacidad antes del
-lanzamiento. El aviso nombra a los dos proveedores.
+Las políticas comerciales de ambos proveedores excluyen por defecto el entrenamiento con
+datos del API. Esto no equivale a retención cero: Anthropic indica eliminación ordinaria dentro
+de 30 días, con excepciones; OpenAI mantiene registros de seguridad hasta 30 días, con
+excepciones. El módulo envía `store: false` a OpenAI. Las condiciones detalladas, incluida la
+retención por seguridad u obligación legal, están en las fuentes oficiales consultadas el
+2 de noviembre de 2026: [Anthropic: entrenamiento](https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training),
+[Anthropic: retención](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data)
+y [OpenAI: controles de datos](https://developers.openai.com/api/docs/guides/your-data).
+Los términos públicos enlazan esas fuentes. Las claves están en Key Vault, pero las consultas
+salen del módulo hacia los API directos de Anthropic y OpenAI, no hacia modelos de Azure.
 
 ### Qué guarda la AEMCiCD
 
@@ -454,23 +463,24 @@ lanzamiento. El aviso nombra a los dos proveedores.
    los precios, priorizar funciones.
 3. **Quién lo ve:** la directiva y los responsables del programa, en forma agregada, desde el
    panel de la plataforma.
-4. **Lo que no se hace:** los datos **no se venden ni se entregan a nadie**, tampoco a la
-   universidad, ni siquiera de forma anónima.
+4. **Lo que no se hace:** las métricas de uso **no se venden ni se entregan a terceros**, tampoco
+   a la universidad, ni siquiera de forma anónima. El envío del contexto al proveedor de IA
+   para responder una consulta es el tratamiento explicado arriba.
 5. **Única excepción:** una orden de autoridad competente. Se entrega solo lo que la orden exija y
    se avisa al estudiante, salvo que la orden lo prohíba.
 6. **Registro de uso de IA:** solo lo ven el estudiante y sus colaboradores; la AEMCiCD no lo
    consulta; se borra con el proyecto.
 
-Esto cumple el principio de finalidad informada de la LOPDP siempre que el aviso de privacidad lo
-diga **antes** de activar la IA.
+El aviso se presenta antes de activar la IA y enlaza a los términos públicos. Esta descripción
+del funcionamiento no sustituye una revisión jurídica del programa.
 
 ### Medición del piloto en la plataforma
 
-- El conector (`latex-sync`) ya enlaza el servidor con la plataforma. Se amplía para enviar
+- El conector (`latex-sync`) ya enlaza el servidor con la plataforma. Envía automáticamente
   **totales mensuales**: estudiantes que usan la IA, consultas y costo por función, por proveedor
   y por modelo, porcentaje de 👍 por modelo, cuántos agotan el crédito y el saldo de cada fuente
   de crédito.
-- El panel `/programa-latex` de la plataforma muestra esas cifras para decidir la oferta.
+- El panel `/programa-latex/ia` muestra esas cifras y la fecha de recepción para decidir la oferta.
 - Ningún dato individual sale del servidor LaTeX hacia la plataforma.
 
 ## 10. Seguridad
@@ -489,15 +499,19 @@ diga **antes** de activar la IA.
 
 ## 11. Cambios en términos, aviso y comunicación
 
-Antes de activar la IA:
+El servicio está habilitado para estudiantes, pero cada estudiante activa la IA de forma opcional.
+Los términos se versionan conjuntamente en la API y el frontend de la plataforma; no se
+reescriben aceptaciones anteriores. Al actualizar su texto se publica una nueva versión.
+
+Contenido de los términos y del aviso:
 
 - **Términos del Programa LaTeX:** la IA es un beneficio opcional sujeto a disponibilidad; crédito
   mensual de $1 no acumulable; uso académico responsable; la responsabilidad sobre la declaración
   de uso de IA es del estudiante.
 - **Aviso de privacidad** del programa: qué se envía a Anthropic y a OpenAI, qué se guarda y la política de
   datos de la sección 9.
-- **Mensaje y flyer:** «IA incluida» y la línea «Tus documentos y tu uso de la IA no se venden ni
-  se entregan a nadie».
+- **Mensaje y flyer:** «IA incluida, de uso opcional. Tus consultas se procesan por Anthropic u
+  OpenAI; AEMCiCD no vende tu información ni entrega métricas de uso a la universidad».
 
 ## 12. Riesgos
 
@@ -526,10 +540,10 @@ Antes de activar la IA:
   recién entonces construir la imagen.
 - Revisión mensual en el panel: costo total, reparto entre modelos, 👍/👎 y funciones poco usadas.
 
-## 14. Pendientes antes de empezar
+## 14. Seguimiento tras el despliegue
 
-1. Luz verde de la directiva a este documento.
-2. Claves de los API de Claude y de OpenAI solo para LaTeX, con límite de gasto mensual,
-   guardadas en el Key Vault como `latex-ai-anthropic-key` y `latex-ai-openai-key` (sección 4).
-3. Verificar la retención de datos vigente de ambos API para el aviso de privacidad.
-4. Verificar cómo escribe archivos `python-runner` (sección 7), antes de la fase 2.
+1. Completar la evaluación de calidad de las funciones de fase 2 con proveedores reales.
+2. Comprobar colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
+3. Revisar periódicamente las políticas de retención, los presupuestos y las métricas del piloto.
+4. Implementar la fase 3. Las claves, la ejecución explícita de Pyodide y el envío de totales ya
+   están configurados o comprobados; no son pendientes de implantación.

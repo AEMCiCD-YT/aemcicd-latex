@@ -1,9 +1,11 @@
 # Comprobación de la fase 2
 
-Código en `ia-fase-2`, desde `origin/ext-ce` (`fcf60a8e29`, fase 1 unida). No se modificó la rama
-`ext-ce`, `latex-server`, la configuración de Azure, los modelos, las claves ni los lockfiles.
-La plataforma tiene su cambio complementario en [PR #79](https://github.com/AEMCiCD-YT/aemcicd-platform/pull/79).
-Este documento describe una instancia **local con proyectos ficticios**, sin despliegue.
+La batería local se ejecutó en `ia-fase-2`, desde `ext-ce` (`fcf60a8e29`, fase 1 unida),
+con proyectos ficticios y proveedores simulados. El código se unió después mediante
+[PR #5](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/5) y está desplegado.
+La plataforma se unió mediante [PR #79](https://github.com/AEMCiCD-YT/aemcicd-platform/pull/79).
+Las comprobaciones posteriores en Azure se documentan por separado en
+[despliegue de producción](despliegue.md); los resultados locales de abajo conservan su alcance.
 
 ## Resultado
 
@@ -72,12 +74,12 @@ los hilos que Overleaf pliega según la selección; no sustituye el control de c
   verificaron dos pestañas de la misma cuenta, y ambas variantes de comentarios en el banco.
 - Sesiones reales HTTPS entre los subdominios de producción; CORS/CSRF se comprobaron contra
   la instancia local, y el componente público de soporte mediante el banco de la plataforma.
-- Migración y persistencia PostgreSQL de la plataforma en una instancia real; esquema validado,
-  servicio y validación cubiertos por pruebas. No se ejecutaron migraciones de producción.
-- Sincronización automática mediante `latex-sync`: requiere modificar `latex-server`, excluido
-  por el usuario. La plataforma admite la carga de `ia-resumen` y la consulta administradora,
-  y tiene preparado el contrato del conector. No se dio por autorizada esa ampliación.
-- No se han unido PRs, publicado nuevos términos ni desplegado estos cambios.
+- Restauración efectiva del respaldo de producción en una instancia aislada. Se confirmó su
+  existencia en Blob Storage, no una restauración completa.
+
+La migración PostgreSQL, la recepción persistida de los totales, los PRs y los despliegues ya
+se completaron; véase [la evidencia de producción](despliegue.md). La prueba del conector no
+certifica por sí sola las sesiones de soporte ni la calidad de las respuestas de los modelos.
 
 La declaración refleja acciones registradas (incluye envíos a revisión y scripts guardados);
 no certifica qué se aceptó finalmente. Su texto lo explica y pide ajustarla al uso incorporado.
