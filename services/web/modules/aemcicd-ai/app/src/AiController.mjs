@@ -431,7 +431,7 @@ async function guardarGenerado(req, res) {
   const eventoId = idValido(req.body?.eventoId)
   const tipo = req.body?.funcion
   if (
-    !['beamer', 'poster'].includes(tipo) ||
+    !['beamer', 'poster', 'codigo_algoritmo'].includes(tipo) ||
     !eventoId ||
     !(await servicio.eventoPropio(usuario(req), projectId, eventoId, tipo))
   )

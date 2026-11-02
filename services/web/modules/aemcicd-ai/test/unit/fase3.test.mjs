@@ -434,3 +434,31 @@ test('PDF.js real: extrae texto de un PDF sintético válido sin guardar el arch
   assert.ok(r.includes('Synthetic method with five measurements.'))
   assert.ok(r.includes('numero="1"'))
 })
+
+test('código a algoritmo: crea un documento LaTeX aparte con paquetes y conserva el origen', () => {
+  const contenido =
+    '\\documentclass{article}\n\\usepackage{algorithm2e}\n\\begin{document}\n\\begin{algorithm}Paso uno\\end{algorithm}\n\\end{document}'
+  const r = validarDocumento(
+    JSON.stringify({ explicacion: 'Revisa', contenido }),
+    'codigo_algoritmo',
+    'a'.repeat(24)
+  )
+  assert.equal(
+    r.documento.archivo,
+    'ia-generados/codigo_algoritmo-' + 'a'.repeat(24) + '.tex'
+  )
+  assert.throws(
+    () =>
+      validarDocumento(
+        JSON.stringify({
+          explicacion: '',
+          contenido: contenido.replace('\\usepackage{algorithm2e}', ''),
+        }),
+        'codigo_algoritmo',
+        'a'.repeat(24)
+      ),
+    ErrorEntrada
+  )
+  assert.equal(funcion('codigo_algoritmo').propuesta, undefined)
+  assert.equal(funcion('codigo_algoritmo').respuesta, 'documento')
+})

@@ -92,11 +92,17 @@ await page.route('**/project/*/aemcicd-ai/*', async r => {
   }
   if (accion === 'consulta') {
     consultas.push(body)
-    const documento = ['beamer', 'poster'].includes(body.funcion)
+    const documento = ['beamer', 'poster', 'codigo_algoritmo'].includes(
+      body.funcion
+    )
       ? {
           archivo: `ia-generados/${body.funcion}-${eventoId}.tex`,
           contenido:
-            '\\documentclass{beamer}\n\\begin{document}\\begin{frame}Método\\end{frame}\\end{document}',
+            body.funcion === 'codigo_algoritmo'
+              ? '\\documentclass{article}\n\\usepackage{algorithm2e}\n\\begin{document}Algoritmo\\end{document}'
+              : body.funcion === 'poster'
+                ? '\\documentclass{beamer}\n\\usepackage{beamerposter}\n\\begin{document}\\begin{frame}Método\\end{frame}\\end{document}'
+                : '\\documentclass{beamer}\n\\begin{document}\\begin{frame}Método\\end{frame}\\end{document}',
         }
       : undefined
     return r.fulfill({
@@ -215,6 +221,12 @@ try {
   assert.equal(consultas.at(-1).entrada.hastaVersion, 3)
   await abrir()
   await page.getByLabel('Modo de conversación').selectOption('tutor_latex')
+  assert.equal(
+    await page
+      .getByLabel('Usar todo el proyecto', { exact: true })
+      .isDisabled(),
+    true
+  )
   await page
     .getByLabel('Pregunta para la IA', { exact: true })
     .fill('Enséñame label y ref.')
@@ -242,6 +254,16 @@ try {
     )
     .waitFor()
   assert.equal(consultas.at(-1).funcion, 'codigo_algoritmo')
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Guardar como archivo nuevo', exact: true })
+      .count(),
+    1
+  )
+  assert.equal(
+    await page.evaluate(() => window.bancoIA.view.state.doc.toString()),
+    'La velocidad es v_0 = 3 m/s.'
+  )
   assert.equal(
     consultas.at(-1).entrada.seleccion,
     'La velocidad es v_0 = 3 m/s.'

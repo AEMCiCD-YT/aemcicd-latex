@@ -223,8 +223,8 @@ export function funcionesFase3(sistema) {
     codigo_algoritmo: definir(
       'rapido',
       'convirtió código a algoritmo',
-      `Convierte la selección de Python o C a pseudocódigo LaTeX con algorithm2e o a un listado con listings, según la solicitud. Conserva el flujo, condiciones y casos límite; no ejecutes el código. Indica los paquetes necesarios en la explicación para que el estudiante los añada al preámbulo. No propongas cambios fuera de la selección. Reemplaza únicamente la selección. ${CAMBIOS}`,
-      { usaSeleccion: true, propuesta: true }
+      `Convierte la selección de Python o C a un documento LaTeX completo con documentclass{article}, con pseudocódigo algorithm2e o un listado listings, según la solicitud. Incluye el paquete necesario. Conserva el flujo, condiciones y casos límite; no ejecutes el código. El archivo Python/C original se conserva y el estudiante decide si guarda el resultado en un .tex nuevo. ${DOCUMENTO}`,
+      { usaSeleccion: true, respuesta: 'documento', esquema: esquemaDocumento }
     ),
   }
 }
@@ -297,14 +297,20 @@ export function validarDocumento(texto, nombre, eventoId) {
   const clase =
     nombre === 'beamer'
       ? /\\documentclass(?:\[[^\]]*\])?\{beamer\}/
-      : /\\documentclass(?:\[[^\]]*\])?\{(?:tikzposter|beamer)\}/
+      : nombre === 'codigo_algoritmo'
+        ? /\\documentclass(?:\[[^\]]*\])?\{article\}/
+        : /\\documentclass(?:\[[^\]]*\])?\{(?:tikzposter|beamer)\}/
   if (
-    !['beamer', 'poster'].includes(nombre) ||
+    !['beamer', 'poster', 'codigo_algoritmo'].includes(nombre) ||
     !/^[a-f\d]{24}$/.test(eventoId) ||
     !clase.test(r.contenido) ||
     (nombre === 'poster' &&
       r.contenido.includes('\\documentclass{beamer}') &&
       !/\\usepackage(?:\[[^\]]*\])?\{beamerposter\}/.test(r.contenido)) ||
+    (nombre === 'codigo_algoritmo' &&
+      !/\\usepackage(?:\[[^\]]*\])?\{(?:algorithm2e|listings)\}/.test(
+        r.contenido
+      )) ||
     !r.contenido.includes('\\begin{document}') ||
     !r.contenido.includes('\\end{document}')
   )

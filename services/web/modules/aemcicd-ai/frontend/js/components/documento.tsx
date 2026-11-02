@@ -21,7 +21,9 @@ export default function Documento({
   if (descartado) return <p>Documento descartado.</p>
   const tipo = documento.archivo.split('/')[1]?.startsWith('beamer-')
     ? 'beamer'
-    : 'poster'
+    : documento.archivo.split('/')[1]?.startsWith('codigo_algoritmo-')
+      ? 'codigo_algoritmo'
+      : 'poster'
   return (
     <div className="aemcicd-ai-propuesta">
       <p>{documento.archivo}</p>
