@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { readFile, mkdir } from 'node:fs/promises'
 import { resolve, join, basename } from 'node:path'
 import assert from 'node:assert/strict'
+import { prepararDeclaracion } from '../../app/src/declaracion.mjs'
 
 const require = createRequire(
   resolve(process.env.AEMCICD_IA_DEPS || '.', 'package.json')
@@ -48,6 +49,11 @@ const errores = []
 page.on('pageerror', e => errores.push(e.message))
 const peticiones = []
 const registros = []
+const comentariosPublicados = []
+await page.route('**/project/*/thread/*/messages', async route => {
+  comentariosPublicados.push(route.request().postDataJSON())
+  return route.fulfill({ status: 204 })
+})
 const saldo = {
   credito: 1,
   gastado: 0.001,
@@ -73,7 +79,46 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
       json: { tokensEntrada: 2500, maximoMicro: 40000, modelos: [] },
     })
   if (accion === 'validar-cambio') return route.fulfill({ json: body.cambio })
+  if (accion === 'validar-comentario')
+    return route.fulfill({ json: body.comentario })
+  if (accion === 'grafica')
+    return route.fulfill({
+      json: { id: 'grafica-prueba', archivo: 'graficas/grafica-prueba.py' },
+    })
+  if (accion === 'declaracion') {
+    const texto = await page.evaluate(() =>
+      window.bancoIA.view.state.doc.toString()
+    )
+    return route.fulfill({
+      json: {
+        cambio: prepararDeclaracion(
+          {
+            ruta: 'main.tex',
+            id: 'doc-main',
+            texto,
+            huella: createHash('sha256').update(texto).digest('hex'),
+          },
+          [{ funcion: 'reescribir' }],
+          body.retirar
+        ),
+        aviso: 'Declara el uso de IA según las normas aplicables.',
+      },
+    })
+  }
   if (accion === 'registro') {
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json: {
+          registro: [
+            {
+              userId: 'prueba',
+              funcion: 'reescribir',
+              resumen: 'reescribió una selección: main.tex',
+              fecha: '2026-11-01T12:00:00Z',
+            },
+          ],
+        },
+      })
     registros.push(body)
     return route.fulfill({ status: fallarRegistro ? 500 : 204 })
   }
@@ -99,6 +144,31 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
     huella: createHash('sha256').update(original).digest('hex'),
   }
   const chat = body.funcion === 'chat_proyecto' || body.funcion === 'pregunta'
+  const extra =
+    body.funcion === 'revisor_jurado'
+      ? {
+          explicacion: 'Observación académica de prueba.',
+          comentarios: [
+            {
+              archivo: 'main.tex',
+              docId: 'doc-main',
+              cita: original,
+              desde: 0,
+              hasta: original.length,
+              comentario: 'Describe cómo mediste las variables.',
+            },
+          ],
+        }
+      : body.funcion === 'grafica_datos'
+        ? {
+            explicacion: 'Gráfica propuesta para revisión.',
+            grafica: {
+              archivo: 'graficas/grafica-prueba.py',
+              script:
+                "import matplotlib.pyplot as plt\nplt.savefig('grafica.pdf')",
+            },
+          }
+        : {}
   return route.fulfill({
     contentType: 'application/x-ndjson',
     body:
@@ -122,6 +192,9 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
                 'El subíndice debe estar dentro del modo matemático. Revisa la propuesta antes de aplicarla.',
               cambios: [cambio],
             }),
+        ...(['revisor_jurado', 'grafica_datos'].includes(body.funcion)
+          ? { ...extra, cambios: [] }
+          : {}),
       }) +
       '\n',
   })
@@ -179,8 +252,19 @@ try {
     assert.equal(peticiones.at(-1).entrada.documento, undefined)
     await page.getByText('Ver diferencias', { exact: true }).click()
     await page.screenshot({ path: join(capturas, `log-${tema}.png`) })
-    await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
-    await page.getByText('Cambio aplicado.', { exact: true }).waitFor()
+    const registroGuardado = page.waitForResponse(
+      r =>
+        r.url().endsWith('/aemcicd-ai/registro') &&
+        r.request().method() === 'POST' &&
+        r.status() === 204
+    )
+    await page
+      .getByRole('button', { name: 'Enviar a revisión', exact: true })
+      .click()
+    await page
+      .getByText('Propuesta enviada al Panel de revisión.', { exact: true })
+      .waitFor()
+    await registroGuardado
     assert.equal(
       await page.evaluate(() => window.bancoIA.view.state.doc.toString()),
       'La velocidad es $v_0 = 3$ m/s.'
@@ -222,14 +306,23 @@ try {
   await corregir()
   await page.evaluate(() =>
     window.bancoIA.view.dispatch({
-      changes: { from: 0, insert: 'Edición de un compañero. ' },
+      changes: {
+        from: 0,
+        to: window.bancoIA.view.state.doc.length,
+        insert: 'Edición de un compañero.',
+      },
     })
   )
-  await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
   await page
-    .getByText('El archivo cambió. Vuelve a consultar antes de aplicar.', {
-      exact: true,
-    })
+    .getByRole('button', { name: 'Enviar a revisión', exact: true })
+    .click()
+  await page
+    .getByText(
+      'El texto que había que cambiar ya no está igual. Vuelve a consultar antes de aplicar.',
+      {
+        exact: true,
+      }
+    )
     .waitFor()
   assert.ok(
     (
@@ -240,7 +333,9 @@ try {
   await abrir('?lectura')
   await corregir()
   assert.equal(
-    await page.getByRole('button', { name: 'Aplicar', exact: true }).count(),
+    await page
+      .getByRole('button', { name: 'Enviar a revisión', exact: true })
+      .count(),
     0
   )
 
@@ -264,10 +359,14 @@ try {
   await abrir()
   await corregir()
   fallarRegistro = true
-  await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Enviar a revisión', exact: true })
+    .click()
   await page.getByRole('button', { name: 'Reintentar registro' }).waitFor()
   assert.equal(
-    await page.getByRole('button', { name: 'Aplicar', exact: true }).count(),
+    await page
+      .getByRole('button', { name: 'Enviar a revisión', exact: true })
+      .count(),
     0
   )
   fallarRegistro = false
@@ -292,10 +391,107 @@ try {
   })
   await page.getByText('una-pagina.pdf', { exact: false }).waitFor()
   await page.getByRole('button', { name: 'Preguntar', exact: true }).click()
-  await page.getByRole('button', { name: 'Aplicar', exact: true }).waitFor()
+  await page
+    .getByRole('button', { name: 'Enviar a revisión', exact: true })
+    .waitFor()
   assert.equal(peticiones.at(-1).funcion, 'foto_latex')
   assert.ok(peticiones.at(-1).entrada.imagen.base64.startsWith('iVBOR'))
   assert.equal(peticiones.at(-1).entrada.imagen.tipo, undefined)
+
+  for (const modo of ['', '?history', '?oscuro']) {
+    await abrir(modo)
+    await page.getByText('Revisión y entrega', { exact: true }).click()
+    await page
+      .getByRole('button', { name: 'Revisor tipo jurado', exact: true })
+      .click()
+    await page.getByRole('button', { name: 'Consultar con este costo' }).click()
+    await page.getByRole('button', { name: 'Añadir al margen' }).click()
+    await page
+      .getByText('Comentario añadido al Panel de revisión.', { exact: true })
+      .waitFor()
+    assert.match(
+      comentariosPublicados.at(-1).content,
+      /^IA, pedido por Estudiante de prueba/
+    )
+    assert.equal(await page.evaluate(() => window.ultimoPanel), 'review-panel')
+    assert.ok(
+      await page.evaluate(
+        history =>
+          history
+            ? window.comentariosHistory?.length > 0
+            : window.comentariosLegacy?.length > 0,
+        modo.includes('history')
+      )
+    )
+    await page.screenshot({
+      path: join(
+        capturas,
+        modo.includes('oscuro')
+          ? 'jurado-oscuro.png'
+          : modo
+            ? 'jurado-history.png'
+            : 'jurado-legacy.png'
+      ),
+    })
+  }
+
+  await abrir()
+  await page.getByText('Gráfica desde datos', { exact: true }).click()
+  await page
+    .getByLabel('Datos de Excel o CSV', { exact: true })
+    .fill('x,y\n0,0\n1,2')
+  await page.getByRole('button', { name: 'Proponer gráfica' }).click()
+  await page
+    .getByRole('button', { name: 'Guardar script en el proyecto' })
+    .click()
+  await page
+    .getByRole('button', { name: 'Ejecutar Python', exact: true })
+    .waitFor()
+  assert.equal(
+    await page.evaluate(() => window.ejecucionesPython || 0),
+    0,
+    'guardar nunca ejecuta Python'
+  )
+  await page.screenshot({ path: join(capturas, 'grafica-guardada.png') })
+  await page
+    .getByRole('button', { name: 'Ejecutar Python', exact: true })
+    .click()
+  await page.waitForFunction(() => window.ejecucionesPython === 1)
+
+  await abrir()
+  await page.evaluate(() => {
+    const view = window.bancoIA.view
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: '\\begin{document}\nResultados.\n\\end{document}',
+      },
+    })
+  })
+  await page.getByText('Registro de uso', { exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Generar declaración', exact: true })
+    .click()
+  await page.getByRole('button', { name: 'Aplicar', exact: true }).click()
+  await page.waitForFunction(() =>
+    window.bancoIA.view.state.doc
+      .toString()
+      .includes('% AEMCICD-IA-DECLARACION-INICIO')
+  )
+  await page.evaluate(() => {
+    const view = window.bancoIA.view
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: '\\begin{document}\nResultados.\n\\end{document}',
+      },
+    })
+  })
+  await page.waitForFunction(() =>
+    window.avisoDeclaracion?.texto.includes('responsabilidad')
+  )
 
   assert.deepEqual(
     errores,
@@ -303,7 +499,7 @@ try {
     'no debe haber errores de ejecución en los componentes'
   )
   console.log(
-    'Interfaz: temas claro/oscuro, log, selección, acciones rápidas, aplicar/deshacer, descarte, conflicto, solo lectura, estimación previa, reintento del registro y PDF (una/dos páginas): correctos. Capturas: ' +
+    'Interfaz: claro/oscuro, log, selección, propuestas con seguimiento, jurado legacy/history, ejecución explícita de gráfica, declaración y aviso al borrarla, acciones rápidas, deshacer, descarte, conflicto, solo lectura, estimación, reintento del registro y PDF: correctos. Capturas: ' +
       capturas
   )
 } finally {

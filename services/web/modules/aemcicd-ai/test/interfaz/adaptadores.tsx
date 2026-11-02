@@ -7,6 +7,7 @@ import {
   ButtonHTMLAttributes,
 } from 'react'
 import type { EditorView } from '@codemirror/view'
+import { StateEffect } from '@codemirror/state'
 
 export const Banco = createContext<{
   view: EditorView
@@ -17,20 +18,97 @@ const banco = () => useContext(Banco)!
 export const useProjectContext = () => ({
   projectId: '0123456789abcdef01234567',
 })
-export const usePermissionsContext = () => ({ write: banco().escribir })
-export const useRailContext = () => ({ openTab: () => {} })
-let documento: { doc_id: string; cm6: { view: EditorView } }
+export const usePermissionsContext = () => ({
+  write: banco().escribir,
+  comment: banco().escribir,
+  trackedWrite: banco().escribir,
+})
+export const useRailContext = () => ({
+  openTab: (tab: string) => {
+    Object.assign(window, { ultimoPanel: tab })
+  },
+})
+export const useUserContext = () => ({
+  id: '0123456789abcdef012345ab',
+  first_name: 'Estudiante',
+  last_name: 'de prueba',
+})
+export const useModalsContext = () => ({
+  showGenericMessageModal: (titulo: string, texto: string) => {
+    Object.assign(window, { avisoDeclaracion: { titulo, texto } })
+  },
+})
+let documento: any
 export const useEditorOpenDocContext = () => {
   const { view } = banco()
   if (!documento || documento.cm6.view !== view)
-    documento = { doc_id: 'doc-main', cm6: { view } }
+    documento = {
+      doc_id: 'doc-main',
+      cm6: { view },
+      track_changes_as: null,
+      getType: () =>
+        location.search.includes('history') ? 'history-ot' : 'sharejs-text-ot',
+      submitOp: (op: unknown) => {
+        const w = window as any
+        ;(w.comentariosLegacy ??= []).push(op)
+      },
+      historyOTShareDoc: {
+        submitOp: (ops: unknown) => {
+          const w = window as any
+          ;(w.comentariosHistory ??= []).push(ops)
+        },
+      },
+      withTrackedChanges: async (
+        _user: string,
+        action: () => Promise<void>
+      ) => {
+        Object.assign(window, { seguimientoActivo: true })
+        try {
+          await action()
+        } finally {
+          Object.assign(window, { seguimientoActivo: false })
+        }
+      },
+    }
   return { currentDocumentId: 'doc-main', currentDocument: documento }
 }
 export const useEditorPropertiesContext = () => ({ showVisual: false })
 export const useEditorManagerContext = () => ({
+  openDocs: { awaitBufferedOps: async () => {} },
   openDocWithId: async (id: string) => {
     if (id !== 'doc-main')
       throw new Error('El archivo no existe en el banco de prueba.')
+  },
+})
+export const trackedDeletesFromState = () => ({
+  toSnapshot: (pos: number) => pos,
+})
+export const rangesUpdatedEffect = StateEffect.define<null>()
+export const PythonExecutionProvider = ({ children }: PropsWithChildren) => (
+  <>{children}</>
+)
+const ejecutores = new Map<string, any>()
+export const usePythonExecutionContext = () => ({
+  getPythonRunner: (id: string) => {
+    if (!ejecutores.has(id)) {
+      let estado = { status: 'idle', output: [], error: null }
+      const listeners = new Set<() => void>()
+      ejecutores.set(id, {
+        getState: () => estado,
+        subscribe: (fn: () => void) => {
+          listeners.add(fn)
+          return () => listeners.delete(fn)
+        },
+        run: async () => {
+          const w = window as any
+          w.ejecucionesPython = (w.ejecucionesPython || 0) + 1
+          estado = { ...estado, status: 'finished' }
+          listeners.forEach(fn => fn())
+        },
+        interrupt: () => {},
+      })
+    }
+    return ejecutores.get(id)
   },
 })
 export const useFileTreePathContext = () => ({

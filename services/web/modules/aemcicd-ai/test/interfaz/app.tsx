@@ -8,6 +8,7 @@ import CorregirLog from '../../frontend/js/components/corregir-log'
 import AccionesSeleccion from '../../frontend/js/components/acciones-seleccion'
 import SolicitudProvider from '../../frontend/js/solicitud-context'
 import { Banco } from './adaptadores'
+import { extension as vigilarDeclaracion } from '../../frontend/js/declaracion-extension'
 
 function App() {
   const contenedor = useRef<HTMLDivElement>(null)
@@ -19,7 +20,7 @@ function App() {
       parent: contenedor.current!,
       state: EditorState.create({
         doc: 'La velocidad es v_0 = 3 m/s.',
-        extensions: [lineNumbers(), history()],
+        extensions: [lineNumbers(), history(), vigilarDeclaracion()],
       }),
       dispatchTransactions: trs => {
         editor.update(trs)
@@ -35,7 +36,7 @@ function App() {
   return (
     <>
       <header className="banco-cabecera">
-        <strong>AEMCiCD · Fase 1</strong>
+        <strong>AEMCiCD · Fase 2</strong>
         <span>
           Banco local de componentes · respuestas simuladas · sin conexión a
           Azure

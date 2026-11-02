@@ -1,0 +1,36 @@
+# Instancia desechable local. No contiene claves reales ni monta datos del servidor.
+services:
+  mongo:
+    image: mongo:8.0
+    command: ['--replSet', 'overleaf', '--bind_ip_all']
+    healthcheck:
+      test:
+        ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand({ping:1}).ok']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:6.2
+  web:
+    image: aemcicd-latex:ia-fase-2
+    ports: ['127.0.0.1:18182:80']
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_started }
+    volumes: ['datos-overleaf:/var/lib/overleaf']
+    environment:
+      OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex?replicaSet=overleaf
+      OVERLEAF_REDIS_HOST: redis
+      REDIS_HOST: redis
+      OVERLEAF_SITE_URL: http://localhost:18182
+      OVERLEAF_SITE_LANGUAGE: es
+      OVERLEAF_APP_NAME: Prueba local IA AEMCiCD
+      OVERLEAF_ADMIN_EMAIL: admin@example.test
+      OVERLEAF_INVITE_TOKEN_SECRET: solo-prueba-local-sin-datos-reales
+      EMAIL_CONFIRMATION_DISABLED: 'true'
+      AEMCICD_AI_ENABLED: 'true'
+      AEMCICD_AI_ONLY_ADMINS: 'true'
+      ANTHROPIC_API_KEY: clave-falsa-prueba-local
+      OPENAI_API_KEY: clave-falsa-prueba-local
+volumes:
+  datos-overleaf:
