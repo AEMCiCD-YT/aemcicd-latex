@@ -23,6 +23,7 @@ import {
 } from '../api'
 import Respuesta from './respuesta'
 import AccionesFase2 from './acciones-fase2'
+import AccionesFase3 from './acciones-fase3'
 import { useSolicitudIA } from '../solicitud-context'
 import { useEditorOpenDocContext } from '@/features/ide-react/context/editor-open-doc-context'
 import { useEditorPropertiesContext } from '@/features/ide-react/context/editor-properties-context'
@@ -46,6 +47,7 @@ export type Turno = {
   voto?: 'guardado' | 'quitado' | 'error'
   alternativa?: boolean
   solicitud: Solicitud
+  documento?: { archivo: string; contenido: string }
   cambios?: Cambio[]
   aviso?: string
   comentarios?: ComentarioIA[]
@@ -246,6 +248,7 @@ function AiPanel() {
           aviso: r.aviso,
           comentarios: r.comentarios,
           grafica: r.grafica,
+          documento: r.documento,
         }))
         setEstado(e => (e ? { ...e, saldo: r.saldo } : e))
       } else {
@@ -428,6 +431,7 @@ function AiPanel() {
         </div>
         <form className="aemcicd-ai-formulario" onSubmit={enviar}>
           <AccionesFase2 />
+          <AccionesFase3 />
           {tieneInstrucciones === false && permisos.write && (
             <OLButton
               size="sm"
@@ -521,6 +525,20 @@ function AiPanel() {
               </OLButton>
             </div>
           )}
+          <label>
+            Modo de conversación
+            <select
+              value={funcion === 'tutor_latex' ? 'tutor_latex' : 'pregunta'}
+              disabled={ocupado || !!imagen}
+              onChange={e => {
+                setFuncion(e.target.value)
+                setUsarProyecto(false)
+              }}
+            >
+              <option value="pregunta">Consultar</option>
+              <option value="tutor_latex">Aprender LaTeX</option>
+            </select>
+          </label>
           <label>
             <input
               type="checkbox"

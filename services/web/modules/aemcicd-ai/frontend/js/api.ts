@@ -27,6 +27,7 @@ export type FinConsulta = {
   aviso?: string
   comentarios?: ComentarioIA[]
   grafica?: { archivo: string; script: string }
+  documento?: { archivo: string; contenido: string }
 }
 
 export type ComentarioIA = {
@@ -38,6 +39,14 @@ export type ComentarioIA = {
   hasta: number
 }
 export const FUNCIONES_PROYECTO = [
+  'bibliografia_verificada',
+  'citas_faltantes',
+  'chat_pdf',
+  'resumen_cambios',
+  'revision_equipo',
+  'beamer',
+  'poster',
+  'coherencia_notacion',
   'chat_proyecto',
   'revisor_jurado',
   'revisar_entrega',
@@ -209,3 +218,19 @@ export async function consultar(
     }
   )
 }
+
+export const leerArchivosFase3 = (projectId: string) =>
+  getJSON<{ pdfs: string[]; bibliografias: string[] }>(
+    ruta(projectId, 'archivos')
+  )
+export const guardarDocumento = (
+  projectId: string,
+  eventoId: string,
+  funcion: string,
+  contenido: string
+) =>
+  postJSON<{ id: string; archivo: string }>(ruta(projectId, 'documento'), {
+    body: { eventoId, funcion, contenido },
+  })
+export const crearBibliografia = (projectId: string) =>
+  postJSON<{ id: string; archivo: string }>(ruta(projectId, 'bibliografia'))

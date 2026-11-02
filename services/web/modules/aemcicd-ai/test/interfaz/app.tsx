@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { EditorView, lineNumbers } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { history, undo } from '@codemirror/commands'
+import ResumenHistorial from '../../frontend/js/components/resumen-historial'
+import Plantillas from '../../frontend/js/components/plantillas'
 import AiPanel from '../../frontend/js/components/ai-panel'
 import CorregirLog from '../../frontend/js/components/corregir-log'
 import AccionesSeleccion from '../../frontend/js/components/acciones-seleccion'
@@ -36,7 +38,7 @@ function App() {
   return (
     <>
       <header className="banco-cabecera">
-        <strong>AEMCiCD · Fase 2</strong>
+        <strong>AEMCiCD · Fase 3</strong>
         <span>
           Banco local de componentes · respuestas simuladas · sin conexión a
           Azure
@@ -74,6 +76,10 @@ function App() {
                       }}
                     />
                   </div>
+                  <ResumenHistorial
+                    selection={{ updateRange: { fromV: 1, toV: 3 } }}
+                  />
+                  <Plantillas />
                 </section>
                 <aside>
                   <AiPanel />

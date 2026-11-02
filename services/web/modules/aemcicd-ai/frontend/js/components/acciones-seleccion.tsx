@@ -43,6 +43,37 @@ export default function AccionesSeleccion() {
         <MaterialIcon type="smart_toy" />
       </summary>
       <div className="aemcicd-ai-menu-acciones">
+        {['codigo_algoritmo', 'tutor_latex'].map(funcion => (
+          <button
+            key={funcion}
+            type="button"
+            disabled={ocupado}
+            onClick={() => {
+              const { from: desde, to: hasta } = view.state.selection.main
+              abrir({
+                funcion,
+                titulo:
+                  funcion === 'codigo_algoritmo'
+                    ? 'Código a algoritmo'
+                    : 'Aprender esta selección',
+                entrada: {
+                  archivo,
+                  desde,
+                  hasta,
+                  seleccion: view.state.sliceDoc(desde, hasta),
+                  pregunta:
+                    funcion === 'codigo_algoritmo'
+                      ? 'Convierte este código a pseudocódigo LaTeX con algorithm2e e indica los paquetes necesarios.'
+                      : 'Explícame esta selección de LaTeX paso a paso y propón un ejercicio.',
+                },
+              })
+            }}
+          >
+            {funcion === 'codigo_algoritmo'
+              ? 'Código a algoritmo'
+              : 'Aprender esta selección'}
+          </button>
+        ))}
         {ACCIONES.map(([accion, titulo]) => (
           <button
             key={accion}

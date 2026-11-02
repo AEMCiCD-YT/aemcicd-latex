@@ -319,3 +319,33 @@
 .aemcicd-ai-fase2 > a {
   color: var(--link-ui-themed, var(--content-primary-themed));
 }
+
+.aemcicd-ai-fase3 {
+  max-height: 32vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+
+  details {
+    padding: var(--spacing-02) 0;
+  }
+
+  label {
+    display: block;
+    margin: var(--spacing-02) 0;
+  }
+
+  input,
+  textarea,
+  select {
+    display: block;
+    width: 100%;
+    color: var(--content-primary-themed);
+    background: var(--bg-primary-themed);
+    border: 1px solid var(--border-primary-themed);
+    border-radius: var(--border-radius-base);
+  }
+
+  a {
+    color: var(--link-ui-themed, var(--content-primary-themed));
+  }
+}
