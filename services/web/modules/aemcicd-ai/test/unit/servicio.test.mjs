@@ -9,6 +9,7 @@ import * as saldos from '../../app/src/saldos.mjs'
 import { crearServicio, ErrorIA } from '../../app/src/servicio.mjs'
 import { ENTRADAS, CONTEXTO } from './casos-fase1.mjs'
 import { ENTRADAS_FASE2 } from './casos-fase2.mjs'
+import { ENTRADAS_FASE3, CONTEXTO_FASE3 } from './casos-fase3.mjs'
 import {
   conectar,
   desconectar,
@@ -320,6 +321,7 @@ test('resumen mensual: solo totales, sin identificadores', async () => {
 for (const [funcion, entrada] of Object.entries({
   ...ENTRADAS,
   ...ENTRADAS_FASE2,
+  ...ENTRADAS_FASE3,
 })) {
   test(`${funcion}: cobra el uso real y no guarda documentos, instrucciones, preguntas, imágenes ni respuestas`, async () => {
     const userId = new ObjectId(),
@@ -333,7 +335,7 @@ for (const [funcion, entrada] of Object.entries({
     }
     const s = servicio({ modelos: { 'gpt-6-luna': modelo } })
     await s.activar(userId, '2026-11')
-    const p = { funcion, entrada, contextoProyecto: CONTEXTO }
+    const p = { funcion, entrada, contextoProyecto: CONTEXTO_FASE3 }
     const estimacion = s.estimar(p)
     const r = await consultar(s, userId, {
       ...p,
@@ -374,6 +376,9 @@ for (const [funcion, entrada] of Object.entries({
     )
     for (const secreto of [
       'RESPUESTA_NO_PERSISTIR',
+      'PDF_NO_PERSISTIR',
+      'HISTORIAL_NO_PERSISTIR',
+      'TITULO_NO_PERSISTIR',
       CONTEXTO.instrucciones,
       CONTEXTO.destino.seleccion,
       entrada.pregunta,

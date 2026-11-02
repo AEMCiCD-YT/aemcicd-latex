@@ -18,6 +18,9 @@ export function escapar(valor) {
 // Etiquetas con las que el módulo marca el contenido del estudiante como datos.
 export const ETIQUETAS_DATOS = [
   'documento',
+  'pagina_pdf',
+  'historial',
+  'referencias_verificadas',
   'seleccion',
   'log',
   'imagen_del_estudiante',

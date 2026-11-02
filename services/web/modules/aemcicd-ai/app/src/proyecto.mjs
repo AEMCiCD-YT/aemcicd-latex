@@ -3,6 +3,9 @@ import { documentoComoDatos, rutaSegura } from './datos.mjs'
 import { ErrorEntrada, funcion } from './funciones.mjs'
 import { estimarTokens } from './precios.mjs'
 import { validarSeleccionProtegida } from './cambios.mjs'
+import { extraerPdf } from './pdf-proyecto.mjs'
+import { textoFase2 } from './fase2.mjs'
+import { intervaloHistorial } from './historial.mjs'
 
 export const NOMBRE_INSTRUCCIONES = 'ia-instrucciones.md'
 export const PLANTILLA_INSTRUCCIONES =
@@ -16,6 +19,10 @@ export function crearLectorProyecto({
   obtenerDocumento,
   crearDocumento,
   obtenerArchivo,
+  obtenerArchivoBinario,
+  obtenerHistorial,
+  buscarBibliografia,
+  extraerTextoPdf = extraerPdf,
 }) {
   async function abrir(projectId) {
     const proyecto = await obtenerProyecto(projectId)
@@ -63,7 +70,7 @@ export function crearLectorProyecto({
         )
       return obtenerArchivo(projectId, archivo)
     }
-    return { proyecto, documentos, leer, leerDatos }
+    return { proyecto, documentos, archivos, leer, leerDatos }
   }
 
   async function preambulo(sesion, doc) {
@@ -89,6 +96,55 @@ export function crearLectorProyecto({
     const def = funcion(nombre)
     const sesion = await abrir(projectId)
     const contexto = { documentos: [], instrucciones: '', destino: null }
+    if (def.usaPdf || def.usaHistorial || def.usaBibliografia)
+      textoFase2(entrada?.pregunta, def.maxPregunta || 4000, 'La solicitud')
+    if (def.usaPdf) {
+      if (
+        !Array.isArray(entrada.pdfs) ||
+        !entrada.pdfs.length ||
+        entrada.pdfs.length > 3
+      )
+        throw new ErrorEntrada('Elige entre uno y tres PDF del proyecto.')
+      const partes = []
+      for (const ruta of [...new Set(entrada.pdfs)]) {
+        rutaSegura(ruta)
+        const archivo = sesion.archivos.get(ruta)
+        if (!/\.pdf$/i.test(ruta) || !archivo || !obtenerArchivoBinario)
+          throw new ErrorEntrada('El PDF no pertenece a este proyecto.')
+        partes.push(
+          await extraerTextoPdf(
+            await obtenerArchivoBinario(projectId, archivo),
+            ruta
+          )
+        )
+        if (estimarTokens(partes.join('\n')) > limiteTokens)
+          throw new ErrorEntrada(
+            'Los PDF superan el límite de contexto; no se envió un fragmento parcial.'
+          )
+      }
+      contexto.bloquePdf = partes.join('\n\n')
+    }
+    if (def.usaHistorial) {
+      intervaloHistorial(entrada)
+      if (!obtenerHistorial)
+        throw new ErrorEntrada('El Historial no está disponible.')
+      contexto.bloqueHistorial = await obtenerHistorial(projectId, entrada)
+      if (estimarTokens(contexto.bloqueHistorial) > limiteTokens)
+        throw new ErrorEntrada('El Historial supera el límite de contexto.')
+    }
+    if (def.usaBibliografia) {
+      const ruta = rutaSegura(entrada?.archivoBib)
+      if (!/\.bib$/i.test(ruta) || !buscarBibliografia)
+        throw new ErrorEntrada('Elige el archivo .bib del proyecto.')
+      const doc = await sesion.leer(ruta)
+      if (doc.texto.length > 500000)
+        throw new ErrorEntrada(
+          'El archivo de bibliografía es demasiado grande.'
+        )
+      contexto.archivoBib = ruta
+      contexto.documentos.push(doc)
+      contexto.referencias = await buscarBibliografia(entrada)
+    }
     if (sesion.documentos.has(NOMBRE_INSTRUCCIONES)) {
       contexto.instrucciones = (await sesion.leer(NOMBRE_INSTRUCCIONES)).texto
       if (contexto.instrucciones.length > 2000)
@@ -148,7 +204,7 @@ export function crearLectorProyecto({
           validarSeleccionProtegida(doc.texto, desde, hasta)
       }
     }
-    if (nombre === 'reescribir' && !contexto.destino)
+    if ((nombre === 'reescribir' || def.usaSeleccion) && !contexto.destino)
       throw new ErrorEntrada('Selecciona el texto que quieres reescribir.')
     if (nombre === 'chat_proyecto' || def.usaProyecto) {
       contexto.documentos = []

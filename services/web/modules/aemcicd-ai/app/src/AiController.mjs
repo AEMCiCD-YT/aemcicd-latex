@@ -1,11 +1,22 @@
 import logger from '@overleaf/logger'
+import { PLANTILLAS, plantilla } from './plantillas.mjs'
+import ProjectCreationHandler from '../../../../app/src/Features/Project/ProjectCreationHandler.mjs'
 import SessionManager from '../../../../app/src/Features/Authentication/SessionManager.mjs'
 import { ObjectId } from '../../../../app/src/infrastructure/mongodb.mjs'
 import { contexto } from './contexto.mjs'
 import { ErrorEntrada, funcion as definicion } from './funciones.mjs'
 import { ErrorIA } from './servicio.mjs'
 import { aUsd } from './precios.mjs'
-import { lectorProyecto, guardarGrafica } from './overleaf.mjs'
+import {
+  lectorProyecto,
+  guardarGrafica,
+  guardarDocumento,
+} from './overleaf.mjs'
+import {
+  validarBibliografia,
+  validarDocumento,
+  verificarClavesCitas,
+} from './fase3.mjs'
 import { validarRespuesta, verificarCambio } from './cambios.mjs'
 import { rutaSegura } from './datos.mjs'
 import { validarComentarios, validarGrafica, textoFase2 } from './fase2.mjs'
@@ -103,6 +114,9 @@ async function consultar(req, res) {
     const def = definicion(funcion)
     if ((funcion === 'foto_latex') !== req.path.endsWith('/foto'))
       throw new ErrorEntrada('La función no corresponde a esta ruta.')
+    const estadoUsuario = await servicio.estado(userId)
+    if (!estadoUsuario.habilitada || !estadoUsuario.activada)
+      throw new ErrorEntrada('Activa la IA para consultar.')
     const contextoProyecto = await lectorProyecto.preparar(
       projectId,
       funcion,
@@ -133,6 +147,18 @@ async function consultar(req, res) {
             contextoProyecto,
             await lectorProyecto.abrir(projectId)
           )
+        else if (def.respuesta === 'bibliografia')
+          propuesta = await validarBibliografia(
+            textoPropuesta,
+            contextoProyecto,
+            await lectorProyecto.abrir(projectId)
+          )
+        else if (def.respuesta === 'documento')
+          propuesta = validarDocumento(
+            textoPropuesta,
+            funcion,
+            String(r.eventoId)
+          )
         else if (def.respuesta === 'grafica')
           propuesta = validarGrafica(
             textoPropuesta,
@@ -147,6 +173,8 @@ async function consultar(req, res) {
             funcion,
             { agrupar: false }
           )
+        if (funcion === 'citas_faltantes')
+          propuesta = verificarClavesCitas(propuesta, contextoProyecto)
       } catch (err) {
         propuesta = {
           explicacion: '',
@@ -195,7 +223,11 @@ async function estimar(req, res) {
   if (!e.activada)
     return res.status(403).json({ mensaje: 'Activa la IA para usarla.' })
   const nombre = req.body?.funcion
-  if (nombre !== 'chat_proyecto' && !definicion(nombre).usaProyecto)
+  if (
+    nombre !== 'chat_proyecto' &&
+    !definicion(nombre).usaProyecto &&
+    !definicion(nombre).usaContexto
+  )
     throw new ErrorEntrada('Solo se estima la consulta del proyecto completo.')
   const contextoProyecto = await lectorProyecto.preparar(
     new ObjectId(req.params.Project_id),
@@ -341,6 +373,80 @@ async function guardarScript(req, res) {
   res.json(resultado)
 }
 
+async function plantillas(req, res) {
+  res.json({ plantillas: PLANTILLAS.map(({ id, nombre }) => ({ id, nombre })) })
+}
+async function crearDesdePlantilla(req, res) {
+  const p = plantilla(req.params.plantilla)
+  if (!p) throw new ErrorEntrada('Elige una plantilla del programa.')
+  const proyecto =
+    await ProjectCreationHandler.promises.createProjectFromSnippet(
+      usuario(req),
+      p.nombre,
+      p.contenido.split('\n')
+    )
+  res.json({ projectId: String(proyecto._id) })
+}
+
+async function crearBib(req, res) {
+  const { config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
+  const projectId = new ObjectId(req.params.Project_id)
+  const s = await lectorProyecto.abrir(projectId)
+  if (s.archivos.has('referencias.bib'))
+    throw new ErrorEntrada('Ya existe un archivo subido con ese nombre.')
+  if (s.documentos.has('referencias.bib'))
+    return res.json({
+      id: (await s.leer('referencias.bib')).id,
+      archivo: 'referencias.bib',
+    })
+  const { default: EditorController } =
+    await import('../../../../app/src/Features/Editor/EditorController.mjs')
+  const doc = await EditorController.promises.addDoc(
+    projectId,
+    s.proyecto.rootFolder[0]._id,
+    'referencias.bib',
+    ['% Añade y revisa aquí tus referencias bibliográficas.'],
+    'aemcicd-ai',
+    usuario(req)
+  )
+  res.json({ id: String(doc._id), archivo: 'referencias.bib' })
+}
+
+async function archivosFase3(req, res) {
+  const { config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
+  const s = await lectorProyecto.abrir(new ObjectId(req.params.Project_id))
+  res.setHeader('Cache-Control', 'no-store')
+  res.json({
+    pdfs: [...s.archivos.keys()].filter(r => /\.pdf$/i.test(r)),
+    bibliografias: [...s.documentos.keys()].filter(r => /\.bib$/i.test(r)),
+  })
+}
+
+async function guardarGenerado(req, res) {
+  const { servicio, config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
+  const projectId = new ObjectId(req.params.Project_id)
+  const eventoId = idValido(req.body?.eventoId)
+  const tipo = req.body?.funcion
+  if (
+    !['beamer', 'poster'].includes(tipo) ||
+    !eventoId ||
+    !(await servicio.eventoPropio(usuario(req), projectId, eventoId, tipo))
+  )
+    return res.sendStatus(404)
+  const resultado = await guardarDocumento(
+    projectId,
+    usuario(req),
+    tipo,
+    String(eventoId),
+    req.body?.contenido
+  )
+  await servicio.registrar(projectId, usuario(req), eventoId, resultado.archivo)
+  res.json(resultado)
+}
+
 async function soporteSesion(req, res) {
   const { servicio, config } = await contexto()
   if (!permitido(req, config))
@@ -452,6 +558,11 @@ function manejar(fn) {
 }
 
 export default {
+  crearBib: manejar(crearBib),
+  plantillas: manejar(plantillas),
+  crearDesdePlantilla: manejar(crearDesdePlantilla),
+  archivosFase3: manejar(archivosFase3),
+  guardarGenerado: manejar(guardarGenerado),
   estado: manejar(estado),
   activar: manejar(activar),
   consultar: manejar(consultar),

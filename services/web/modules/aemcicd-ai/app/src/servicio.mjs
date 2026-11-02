@@ -195,7 +195,7 @@ export function crearServicio({
       opciones = {},
       tokensEntrada,
     } = prepararConsulta(funcion, entrada, contextoProyecto)
-    if (funcion === 'chat_proyecto' || def.usaProyecto) {
+    if (funcion === 'chat_proyecto' || def.usaProyecto || def.usaContexto) {
       const estimacion = estimar({
         funcion,
         entrada,

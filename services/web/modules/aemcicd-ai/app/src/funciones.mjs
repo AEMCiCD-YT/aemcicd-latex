@@ -4,6 +4,7 @@ import { dato, escapar, documentoComoDatos } from './datos.mjs'
 import { validarImagen } from './imagen.mjs'
 import { ErrorEntrada } from './entrada.mjs'
 import { funcionesFase2 } from './fase2.mjs'
+import { funcionesFase3 } from './fase3.mjs'
 export { ErrorEntrada } from './entrada.mjs'
 
 const SISTEMA_BASE = `Eres el asistente de LaTeX del Programa AEMCiCD LaTeX, un servidor Overleaf para
@@ -262,3 +263,5 @@ export function funcion(nombre) {
 }
 
 Object.assign(FUNCIONES, funcionesFase2(SISTEMA_BASE))
+
+Object.assign(FUNCIONES, funcionesFase3(SISTEMA_BASE))
