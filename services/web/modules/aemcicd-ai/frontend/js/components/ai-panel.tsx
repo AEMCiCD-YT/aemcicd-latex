@@ -238,6 +238,8 @@ function AiPanel() {
   const [incluirSeleccion, setIncluirSeleccion] = useState(true)
   const [seleccion, setSeleccion] = useState(0)
   const [adjunto, setAdjunto] = useState<Adjunto | null>(null)
+  // Destino de la transcripción: el cursor (o la selección) o el archivo abierto completo.
+  const [reemplazarTodo, setReemplazarTodo] = useState(false)
   const [rango, setRango] = useState<Rango | null>(null)
   const [preparando, setPreparando] = useState('')
   const [aviso, setAviso] = useState('')
@@ -578,7 +580,10 @@ function AiPanel() {
       const destino =
         view && archivoAbierto && !showVisual
           ? (() => {
-              const { from: desde, to: hasta } = view.state.selection.main
+              const { from, to } = view.state.selection.main
+              const [desde, hasta] = reemplazarTodo
+                ? [0, view.state.doc.length]
+                : [from, to]
               return {
                 archivo: archivoAbierto,
                 desde,
@@ -628,6 +633,7 @@ function AiPanel() {
       const imagenes = await prepararPaginas(archivo, desde, hasta, (k, n) =>
         setPreparando(`Preparando página ${k} de ${n}…`)
       )
+      setReemplazarTodo(false)
       setAdjunto({
         nombre:
           archivo.name +
@@ -696,20 +702,39 @@ function AiPanel() {
   const chips = () => {
     if (adjunto)
       return (
-        <span className="aemcicd-ai-chip activo">
-          <MaterialIcon
-            type={adjunto.imagenes.length > 1 ? 'picture_as_pdf' : 'image'}
-          />
-          {adjunto.nombre}
-          {adjunto.imagenes.length > 1 && ` · ${adjunto.imagenes.length} págs.`}
-          <button
-            type="button"
-            aria-label="Quitar el archivo"
-            onClick={() => setAdjunto(null)}
-          >
-            <MaterialIcon type="close" />
-          </button>
-        </span>
+        <>
+          <span className="aemcicd-ai-chip activo">
+            <MaterialIcon
+              type={adjunto.imagenes.length > 1 ? 'picture_as_pdf' : 'image'}
+            />
+            {adjunto.nombre}
+            {adjunto.imagenes.length > 1 &&
+              ` · ${adjunto.imagenes.length} págs.`}
+            <button
+              type="button"
+              aria-label="Quitar el archivo"
+              onClick={() => setAdjunto(null)}
+            >
+              <MaterialIcon type="close" />
+            </button>
+          </span>
+          {archivoAbierto && !showVisual && (
+            <button
+              type="button"
+              className={`aemcicd-ai-chip ${reemplazarTodo ? 'error' : 'activo'}`}
+              aria-pressed={reemplazarTodo}
+              title="Dónde va el LaTeX transcrito. Pulsa para cambiar."
+              onClick={() => setReemplazarTodo(v => !v)}
+            >
+              <MaterialIcon type={reemplazarTodo ? 'swap_horiz' : 'input'} />
+              {reemplazarTodo
+                ? `Reemplazar todo ${archivoAbierto.split('/').pop()}`
+                : seleccion > 0
+                  ? 'En la selección'
+                  : 'En el cursor'}
+            </button>
+          )}
+        </>
       )
     if (funcion !== 'agente')
       return (

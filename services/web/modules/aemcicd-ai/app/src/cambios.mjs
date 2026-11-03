@@ -194,6 +194,10 @@ export async function validarRespuesta(
       const d = contexto.destino
       // Tolerar solo diferencias de espacios o saltos de línea al final: el modelo a veces
       // incluye el salto de línea que sigue a la selección. Se conservan los del original.
+      // antes="" significa «el destino»: reemplaza la selección entera (o inserta si está vacía),
+      // sin obligar a la IA a copiar una selección larga, p. ej. un archivo completo.
+      if (!cambio.antes && d.seleccion)
+        cambio = { ...cambio, antes: d.seleccion }
       if (
         cambio.antes !== d.seleccion &&
         d.seleccion &&
