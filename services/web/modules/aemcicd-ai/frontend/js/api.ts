@@ -129,7 +129,13 @@ export const guardarGrafica = (
     body: { eventoId, script },
   })
 
-export type ErrorConsulta = { tipo: 'error'; codigo: string; mensaje: string }
+export type ErrorConsulta = {
+  tipo: 'error'
+  codigo: string
+  mensaje: string
+  // Con codigo 'estimacion': el costo nuevo, para volver a confirmarlo.
+  estimacion?: Estimacion
+}
 
 export function leerEstado() {
   return getJSON<EstadoIA>('/aemcicd-ai/estado')

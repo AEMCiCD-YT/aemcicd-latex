@@ -591,6 +591,11 @@ test('foto a LaTeX: varias páginas, salida proporcional, confirmación y estima
     estimada.mensajes[0].content.filter(p => p.type === 'image').length,
     0
   )
+  // Sin imágenes, el texto estimado es idéntico al de la consulta: si no, la consulta real
+  // costaba más que lo aceptado y se rechazaba («Revisa la estimación»).
+  const texto = m =>
+    JSON.stringify(m.mensajes[0].content.filter(p => p.type !== 'image'))
+  assert.equal(texto(estimada), texto(cinco))
   for (const malo of [
     { imagenes: [] },
     { imagenes: Array.from({ length: 21 }, () => ({ base64: PNG })) },

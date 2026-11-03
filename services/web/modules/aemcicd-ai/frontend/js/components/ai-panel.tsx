@@ -365,6 +365,7 @@ function AiPanel() {
     if (control.current) return
     setOcupado(true)
     setConfirmacion(null)
+    setAviso('')
     const { titulo: texto, preferir } = solicitud
     const id = siguienteId.current++
     setTurnos(ts => [
@@ -401,6 +402,14 @@ function AiPanel() {
           documento: r.documento,
         }))
         setEstado(e => (e ? { ...e, saldo: r.saldo } : e))
+      } else if (r.codigo === 'estimacion' && r.estimacion) {
+        // El costo cambió entre la estimación y la confirmación: se muestra el nuevo.
+        setTurnos(ts => ts.filter(t => t.id !== id))
+        setConfirmacion({
+          solicitud: { ...solicitud, maximoAceptadoMicro: undefined },
+          estimacion: r.estimacion,
+        })
+        setAviso(r.mensaje)
       } else {
         actualizar(id, () => ({ estado: 'error', error: r.mensaje }))
         if (r.codigo === 'sin_saldo' || r.codigo === 'no_activada') cargar()

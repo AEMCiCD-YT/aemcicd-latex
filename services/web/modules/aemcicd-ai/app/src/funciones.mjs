@@ -346,16 +346,21 @@ export const FUNCIONES = {
             .join('\n\n'),
         },
       ]
-      imagenes.forEach((imagen, i) => {
-        contenido.push(
-          {
-            type: 'text',
-            text: `<imagen_del_estudiante pagina="${i + 1}" de="${paginas}">`,
-          },
-          { type: 'image', image: imagen.datos, mediaType: imagen.tipo },
-          { type: 'text', text: '</imagen_del_estudiante>' }
-        )
-      })
+      // Mismo texto al estimar (sin imágenes) que al consultar: si no, la consulta real sale más
+      // cara que lo aceptado y se rechaza.
+      for (let i = 0; i < paginas; i++) {
+        contenido.push({
+          type: 'text',
+          text: `<imagen_del_estudiante pagina="${i + 1}" de="${paginas}">`,
+        })
+        if (imagenes[i])
+          contenido.push({
+            type: 'image',
+            image: imagenes[i].datos,
+            mediaType: imagenes[i].tipo,
+          })
+        contenido.push({ type: 'text', text: '</imagen_del_estudiante>' })
+      }
       return {
         sistema: SISTEMA_BASE + '\n\n' + FORMATO_CAMBIOS,
         // ~1600 tokens por imagen de 1600 px en ambos proveedores; se reserva con margen.
