@@ -93,8 +93,9 @@ sin contenido para comprobar el guardado real; no lo presenta como una respuesta
 
 ## Lo que no se certifica
 
-- Calidad de las respuestas de fase 3 con los proveedores reales: no se hicieron llamadas
-  reales a modelos en esta batería ni se ejecutaron los 93 casos contra ellos.
+- Esta batería local no midió la calidad de respuestas reales. La
+  [evaluación posterior de 93 casos](../../ia-eval/informes/2026-11-02.md) ya está ejecutada y
+  distingue respuestas correctas, observaciones y defectos por corregir.
 - OCR, interpretación de figuras de PDF, verificación simbólica o validez científica de una
   referencia: siguen fuera del alcance o requieren revisión humana.
 - Colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
