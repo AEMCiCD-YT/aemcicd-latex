@@ -25,6 +25,7 @@ export const ETIQUETAS_DATOS = [
   'log',
   'imagen_del_estudiante',
   'instrucciones_del_estudiante',
+  'peticion_del_estudiante',
 ]
 const CIERRE = new RegExp(`</(?=\\s*(?:${ETIQUETAS_DATOS.join('|')})\\b)`, 'gi')
 

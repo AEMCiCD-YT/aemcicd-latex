@@ -3,7 +3,7 @@ import AiRouter from './app/src/AiRouter.mjs'
 import { contexto } from './app/src/contexto.mjs'
 import { cuerpoFoto } from './app/src/cuerpo-foto.mjs'
 import Settings from '@overleaf/settings'
-import { corsPlataforma, ORIGEN_PLATAFORMA } from './app/src/plataforma.mjs'
+import { corsPlataforma } from './app/src/plataforma.mjs'
 
 // Asistente de IA de LaTeX AEMCiCD. Diseño: aemcicd/docs/ia-diseno.md.
 // Se activa con AEMCICD_AI_ENABLED=true y al menos una clave (ANTHROPIC_API_KEY u OPENAI_API_KEY).
@@ -11,7 +11,7 @@ import { corsPlataforma, ORIGEN_PLATAFORMA } from './app/src/plataforma.mjs'
 export default {
   router: AiRouter,
   appMiddleware(app) {
-    corsPlataforma(app)
+    corsPlataforma(app, Settings.siteUrl)
     cuerpoFoto(app)
   },
   hooks: {
@@ -31,10 +31,8 @@ export default {
     },
   },
   async start() {
-    // Origin permitido por la comprobación global; CORS solo se concede en las rutas anteriores.
-    Settings.allowedOrigins = [
-      ...new Set([...(Settings.allowedOrigins || []), ORIGEN_PLATAFORMA]),
-    ]
+    // No se añade la plataforma a Settings.allowedOrigins: eso la autorizaría en todo el editor.
+    // CORS se concede solo en las rutas de soporte (plataforma.mjs).
     await contexto()
   },
 }

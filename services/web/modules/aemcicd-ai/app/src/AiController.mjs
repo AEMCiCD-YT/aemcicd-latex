@@ -1,4 +1,6 @@
 import logger from '@overleaf/logger'
+import Settings from '@overleaf/settings'
+import { crearFirmador } from './token-soporte.mjs'
 import { PLANTILLAS, plantilla } from './plantillas.mjs'
 import ProjectCreationHandler from '../../../../app/src/Features/Project/ProjectCreationHandler.mjs'
 import SessionManager from '../../../../app/src/Features/Authentication/SessionManager.mjs'
@@ -26,6 +28,10 @@ import { resumenMensual } from './resumen.mjs'
 // Versión del aviso de IA que el estudiante acepta al activar (cambia si cambian los términos).
 export const VERSION_AVISO = '2026-11'
 
+const firmadorSoporte = crearFirmador(
+  Settings.security?.sessionSecret || undefined
+)
+
 const ESTADOS_HTTP = {
   deshabilitada: 503,
   no_activada: 403,
@@ -33,6 +39,7 @@ const ESTADOS_HTTP = {
   sin_presupuesto: 503,
   no_disponible: 503,
   entrada: 400,
+  ocupada: 409,
 }
 
 function usuario(req) {
@@ -117,26 +124,30 @@ async function consultar(req, res) {
     const estadoUsuario = await servicio.estado(userId)
     if (!estadoUsuario.habilitada || !estadoUsuario.activada)
       throw new ErrorEntrada('Activa la IA para consultar.')
-    const contextoProyecto = await lectorProyecto.preparar(
-      projectId,
-      funcion,
-      entrada,
-      config.maxTokensProyecto
-    )
     let textoPropuesta = ''
-    const r = await servicio.consultar({
-      userId,
-      projectId,
-      funcion: String(funcion || ''),
-      entrada,
-      contextoProyecto,
-      maximoAceptadoMicro,
-      preferir: preferir === 'alternativa' ? 'alternativa' : undefined,
-      senal: control.signal,
-      alEscribir: texto => {
-        if (def.propuesta || def.respuesta) textoPropuesta += texto
-        else linea({ tipo: 'texto', texto })
-      },
+    let contextoProyecto
+    const r = await servicio.conBloqueo(userId, async () => {
+      contextoProyecto = await lectorProyecto.preparar(
+        projectId,
+        funcion,
+        entrada,
+        config.maxTokensProyecto
+      )
+      return servicio.consultar({
+        bloqueado: true,
+        userId,
+        projectId,
+        funcion: String(funcion || ''),
+        entrada,
+        contextoProyecto,
+        maximoAceptadoMicro,
+        preferir: preferir === 'alternativa' ? 'alternativa' : undefined,
+        senal: control.signal,
+        alEscribir: texto => {
+          if (def.propuesta || def.respuesta) textoPropuesta += texto
+          else linea({ tipo: 'texto', texto })
+        },
+      })
     })
     let propuesta = {}
     if (def.propuesta || def.respuesta) {
@@ -229,20 +240,22 @@ async function estimar(req, res) {
     !definicion(nombre).usaContexto
   )
     throw new ErrorEntrada('Solo se estima la consulta del proyecto completo.')
-  const contextoProyecto = await lectorProyecto.preparar(
-    new ObjectId(req.params.Project_id),
-    nombre,
-    req.body.entrada,
-    config.maxTokensProyecto
-  )
-  res.json(
-    servicio.estimar({
+  // Dentro del bloqueo: preparar lee PDF, historial o Crossref y no debe correr en paralelo.
+  const estimacion = await servicio.conBloqueo(usuario(req), async () => {
+    const contextoProyecto = await lectorProyecto.preparar(
+      new ObjectId(req.params.Project_id),
+      nombre,
+      req.body.entrada,
+      config.maxTokensProyecto
+    )
+    return servicio.estimar({
       funcion: nombre,
       entrada: req.body.entrada,
       contextoProyecto,
       preferir: req.body.preferir,
     })
-  )
+  })
+  res.json(estimacion)
 }
 
 async function instrucciones(req, res) {
@@ -323,7 +336,8 @@ async function declaracion(req, res) {
 }
 
 async function validarComentario(req, res) {
-  const { servicio } = await contexto()
+  const { servicio, config } = await contexto()
+  if (!config.habilitada || !permitido(req, config)) return res.sendStatus(503)
   const projectId = new ObjectId(req.params.Project_id)
   const eventoId = idValido(req.body?.eventoId)
   if (
@@ -333,7 +347,9 @@ async function validarComentario(req, res) {
     return res.sendStatus(404)
   const sesion = await lectorProyecto.abrir(projectId)
   const c = req.body?.comentario
-  const doc = await sesion.leer(c?.archivo)
+  if (!c || typeof c !== 'object')
+    throw new ErrorEntrada('Falta el comentario que hay que validar.')
+  const doc = await sesion.leer(c.archivo)
   const validada = await validarComentarios(
     JSON.stringify({
       explicacion: '',
@@ -457,13 +473,21 @@ async function soporteSesion(req, res) {
     habilitada: e.habilitada,
     activada: e.activada,
     saldo: saldoJson(e.saldo),
-    csrf: req.csrfToken(),
+    // Se llama «csrf» por compatibilidad con la plataforma, pero NO es el token CSRF de la sesión
+    // de Overleaf: es un token propio, válido solo para POST /aemcicd-ai/soporte (ver
+    // token-soporte.mjs).
+    csrf: firmadorSoporte.crear(usuario(req)),
   })
 }
 
 async function soporte(req, res) {
   const { servicio, config } = await contexto()
   if (!permitido(req, config)) return res.sendStatus(503)
+  // Ruta fuera de la protección CSRF general: se exige el token propio del soporte.
+  if (!firmadorSoporte.valido(usuario(req), req.get('X-Csrf-Token')))
+    return res.status(403).json({
+      mensaje: 'La sesión de soporte venció. Vuelve a conectar.',
+    })
   // Mismo crédito y proveedores del estudiante, sin proyecto ni datos de cuentas.
   res.setHeader('Cache-Control', 'no-store')
   let texto = ''

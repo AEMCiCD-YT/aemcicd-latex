@@ -41,8 +41,8 @@ test('costo real con caché y cota superior', () => {
     },
     outputTokens: 1000,
   })
-  // 6000*2 + 4000*0.2 + 1000*10 = 22 800 / 1e6 USD = 0.0228 USD
-  assert.equal(real, 22800)
+  // 6000*2 + 4000*0.1 + 1000*10 = 22 400 micro-USD (lectura de caché de Sonnet: $0,10)
+  assert.equal(real, 22400)
   assert.ok(costoMaximo('claude-sonnet-5-5', 10000, 1000) >= real)
 })
 

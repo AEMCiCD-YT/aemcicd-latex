@@ -6,15 +6,25 @@
 // cacheEscritura: tokens escritos en la caché (Anthropic cobra 1,25 × entrada; OpenAI no cobra);
 // salida: tokens generados (incluye razonamiento).
 export const PRECIOS_POR_DEFECTO = {
+  // Haiku 5.5 cobra 5 veces más si el prompt pasa de 100 000 tokens (tarifa oficial consultada
+  // el 3 de noviembre de 2026). «largo» se aplica a toda la consulta cuando la entrada lo supera.
   'claude-haiku-5-5': {
     entrada: 0.1,
     cacheLectura: 0.01,
     cacheEscritura: 0.125,
     salida: 0.5,
+    largo: {
+      desdeTokens: 100000,
+      entrada: 0.5,
+      cacheLectura: 0.05,
+      cacheEscritura: 0.625,
+      salida: 2.5,
+    },
   },
+  // Lectura de caché: 0,05 × entrada = $0,10 (antes figuraba $0,20 por error).
   'claude-sonnet-5-5': {
     entrada: 2,
-    cacheLectura: 0.2,
+    cacheLectura: 0.1,
     cacheEscritura: 2.5,
     salida: 10,
   },
@@ -49,9 +59,12 @@ export function aUsd(micro) {
   return micro / MICRO
 }
 
-function precioDe(modelo, precios) {
+function precioDe(modelo, precios, tokensEntrada = 0) {
   const precio = precios[modelo]
   if (!precio) throw new Error(`sin precio para el modelo ${modelo}`)
+  // Tarifa de prompts largos (Haiku 5.5 sobre 100 000 tokens de entrada).
+  if (precio.largo && tokensEntrada > precio.largo.desdeTokens)
+    return precio.largo
   return precio
 }
 
@@ -61,8 +74,8 @@ function precioDe(modelo, precios) {
 // Costo real de una respuesta, a partir del uso que devuelve el SDK (LanguageModelUsage).
 // Se redondea hacia arriba: nunca se cobra de menos.
 export function costoReal(modelo, uso, precios = PRECIOS_POR_DEFECTO) {
-  const p = precioDe(modelo, precios)
   const total = uso?.inputTokens ?? 0
+  const p = precioDe(modelo, precios, total)
   const lectura = uso?.inputTokenDetails?.cacheReadTokens ?? 0
   const escritura = uso?.inputTokenDetails?.cacheWriteTokens ?? 0
   const sinCache =
@@ -85,7 +98,7 @@ export function costoMaximo(
   maxSalida,
   precios = PRECIOS_POR_DEFECTO
 ) {
-  const p = precioDe(modelo, precios)
+  const p = precioDe(modelo, precios, tokensEntrada)
   return Math.ceil(
     tokensEntrada * Math.max(p.entrada, p.cacheEscritura) +
       maxSalida * p.salida -
@@ -100,7 +113,7 @@ export function salidaQueCabe(
   saldoMicro,
   precios = PRECIOS_POR_DEFECTO
 ) {
-  const p = precioDe(modelo, precios)
+  const p = precioDe(modelo, precios, tokensEntrada)
   const restante =
     saldoMicro - tokensEntrada * Math.max(p.entrada, p.cacheEscritura)
   if (restante <= 0) return 0

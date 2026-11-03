@@ -28,6 +28,12 @@ FROM ${BASE}
 # La galería nativa debe estar disponible para las plantillas del programa. Ambos valores
 # pueden sobrescribirse explícitamente al ejecutar la imagen.
 ENV ENABLE_PANDOC_CONVERSIONS=true OVERLEAF_TEMPLATE_GALLERY=true
+# El compilador (CLSI) no necesita las claves de IA. Sin compilación aislada (sin contenedores
+# hermanos), TeX y Pandoc corren con su entorno y un documento podría leerlas, por ejemplo con
+# \lstinputlisting{/proc/self/environ}. Se quitan del entorno del servicio de compilación.
+RUN sed -i 's|^source /etc/overleaf/env.sh$|&\nunset ANTHROPIC_API_KEY OPENAI_API_KEY|' \
+      /etc/service/clsi-overleaf/run \
+ && grep -q '^unset ANTHROPIC_API_KEY OPENAI_API_KEY$' /etc/service/clsi-overleaf/run
 RUN apt-get update \
  && apt-get install -y --no-install-recommends pandoc zip \
  && rm -rf /var/lib/apt/lists/*
