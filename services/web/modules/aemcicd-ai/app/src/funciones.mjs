@@ -79,7 +79,7 @@ function instrucciones(contexto) {
 function destino(contexto) {
   const d = contexto.destino
   return d
-    ? `${dato('seleccion', d.seleccion, ` ruta="${escapar(d.ruta)}"`)}\nDestino: ${JSON.stringify({ archivo: d.ruta, desde: d.desde, hasta: d.hasta })}. Reemplaza solamente esa selección; no cambies el resto del archivo.`
+    ? `${dato('seleccion', d.seleccion, ` ruta="${escapar(d.ruta)}"`)}\nDestino: ${JSON.stringify({ archivo: d.ruta, desde: d.desde, hasta: d.hasta })}. Reemplaza solamente esa selección; no cambies el resto del archivo. Usa antes="" y pon en despues el texto que reemplaza toda la selección (o que se inserta, si está vacía).${d.desde === 0 && d.hasta === d.texto?.length && d.seleccion ? ' La selección es el archivo completo: el estudiante pidió reemplazarlo, así que entrega el documento completo (con preámbulo).' : ''}`
     : 'No hay archivo de destino. Devuelve el código en la explicación y cambios=[].'
 }
 
@@ -133,7 +133,9 @@ la conversación.
 - Si una tabla o figura se sale del margen, ajústala (p. ej., tabularx, \\resizebox o
   \\small) en lugar de solo explicarlo.
 - Si solo hace una pregunta, responde en la explicación y deja cambios=[].
-- Haz cambios pequeños y localizados; no reescribas el archivo entero.
+- Haz cambios pequeños y localizados. Reescribe el archivo entero solo si el estudiante lo pide
+  expresamente («dame el código completo», «reemplázalo todo»): entonces usa un único cambio con
+  «antes» igual al archivo completo que se te mostró.
 - La explicación es breve: qué cambiaste y por qué.`
 
 function vistaComoDatos(v) {

@@ -487,6 +487,25 @@ test('reescribir: un salto de línea final de más en «antes» se tolera y se c
   )
 })
 
+test('antes vacío con una selección reemplaza la selección entera (p. ej., todo el archivo)', async () => {
+  const r = await validarRespuesta(
+    respuesta({ archivo: 'main.tex', antes: '', despues: nuevo }),
+    CONTEXTO,
+    sesion,
+    'foto_latex'
+  )
+  assert.equal(r.cambios[0].antes, SELECCION)
+  assert.deepEqual(
+    [r.cambios[0].desde, r.cambios[0].hasta],
+    [0, SELECCION.length]
+  )
+  assert.equal(r.cambios[0].despues, nuevo)
+  // El destino de todo el archivo avisa a la IA de que debe entregar el documento completo.
+  const def = funcion('foto_latex')
+  const todo = def.preparar({ imagen: { base64: PNG } }, CONTEXTO)
+  assert.match(JSON.stringify(todo.mensajes), /archivo completo/)
+})
+
 test('corregir: incluye el preámbulo (del archivo o del principal) y acepta añadir un paquete', async () => {
   const principal = [
     '\\documentclass{article}',
