@@ -314,6 +314,7 @@ try {
     const tab = page.getByRole('tab', { name: 'Asistente de IA', exact: true })
     if (!(await tab.getAttribute('class')).includes('open-rail'))
       await tab.click()
+    await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
     await page.getByText('Investigación y PDF', { exact: true }).click()
     await page.getByLabel('Pregunta o tema', { exact: true }).waitFor()
     await page.screenshot({ path: join(salida, `panel-real-${tema}.png`) })

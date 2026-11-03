@@ -1065,7 +1065,12 @@ module.exports = {
       ),
     ],
     pdfLogEntryComponents: [],
-    pdfLogEntriesComponents: [],
+    pdfLogEntriesComponents: [
+      Path.resolve(
+        __dirname,
+        '../modules/aemcicd-ai/frontend/js/components/arreglar-errores.tsx'
+      ),
+    ],
     pdfPreviewPromotions: [],
     diagnosticActions: [],
     sourceEditorCompletionSources: [],

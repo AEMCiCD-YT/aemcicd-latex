@@ -93,7 +93,11 @@ export default function Respuesta({
           />
         )}
         {turno.estado === 'escribiendo' && !turno.texto && (
-          <span className="aemcicd-ai-pensando">Pensando…</span>
+          <span className="aemcicd-ai-pensando">
+            {turno.progreso
+              ? `Escribiendo los cambios… (${turno.progreso.toLocaleString('es-EC')} caracteres)`
+              : 'Pensando…'}
+          </span>
         )}
         {turno.estado === 'error' && (
           <p className="aemcicd-ai-error">

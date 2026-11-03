@@ -31,7 +31,10 @@ lo cierra al terminar y comprueba:
 - Un lector no ve «Enviar a revisión».
 - El chat del proyecto no consulta hasta aceptar el costo estimado.
 - Si falla el registro tras editar, el reintento solo registra y no vuelve a editar.
-- PDF de una página convertido a PNG y PDF de dos páginas rechazado antes de enviar.
+- PDF de dos páginas convertido a dos JPEG; PDF de 25 páginas con elección de rango (3–6) y
+  estimación previa sin reenviar las imágenes.
+- Agente: el chat envía archivo, cursor, selección, errores y avisos `Overfull` del log (no el
+  texto) y, en la consulta siguiente, el historial; «Todo el proyecto» pide estimación.
 - Jurado en legacy/history-ot, guardado de gráfica sin ejecutarla y ejecución solo al pulsar.
 - Declaración determinista y aviso al borrar su marca manualmente.
 - Ausencia de errores JavaScript en estos componentes.
