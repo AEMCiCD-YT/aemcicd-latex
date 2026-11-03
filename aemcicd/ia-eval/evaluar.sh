@@ -11,4 +11,9 @@ ANTHROPIC_API_KEY=$(az keyvault secret show --vault-name "$KV" -n latex-ai-anthr
 OPENAI_API_KEY=$(az keyvault secret show --vault-name "$KV" -n latex-ai-openai-key --query value -o tsv 2>/dev/null || true)
 export ANTHROPIC_API_KEY OPENAI_API_KEY
 unset ANTHROPIC_BASE_URL OPENAI_BASE_URL
-node evaluar.mjs "$@"
+if [[ ${1:-} == --rutas ]]; then
+  shift
+  node evaluar-rutas.mjs "$@"
+else
+  node evaluar.mjs "$@"
+fi

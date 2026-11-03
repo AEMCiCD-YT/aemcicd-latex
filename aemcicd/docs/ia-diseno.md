@@ -577,7 +577,8 @@ Contenido de los términos y del aviso:
 
 ## 14. Seguimiento tras el despliegue
 
-1. Completar la evaluación de calidad de las funciones de fases 2 y 3 con proveedores reales.
+1. Corregir y volver a probar los hallazgos de la [evaluación real de 93 casos](../ia-eval/informes/2026-11-02.md):
+   paquetes, plantillas, explicaciones técnicas y tarifa de caché. La primera pasada con ambos proveedores está completa.
 2. Comprobar colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
 3. Revisar periódicamente las políticas de retención, los presupuestos y las métricas del piloto.
 4. Seguir el uso y la calidad de las funciones publicadas. Las tres fases, las claves, la

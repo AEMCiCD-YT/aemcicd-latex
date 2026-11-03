@@ -69,8 +69,9 @@ complementan estas comprobaciones; no se presentan como sesiones autenticadas de
 
 ## Pendiente de comprobación
 
-- Calidad y costo observado de las funciones de fases 2 y 3 con proveedores reales; los 93
-  casos están preparados, pero no se ejecutaron contra modelos durante esta publicación.
+- Corregir los hallazgos de la [evaluación real posterior de 93 casos](../../ia-eval/informes/2026-11-02.md).
+  La publicación inicial no hizo consultas a modelos; la evaluación posterior completó 186
+  respuestas y documentó el costo, los ejemplos y las correcciones pendientes.
 - Colaboración entre cuentas distintas y soporte HTTPS entre subdominios con sesiones reales.
 - Restauración del respaldo en una instancia aislada.
 

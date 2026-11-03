@@ -1,0 +1,72 @@
+{
+  "rutas": {
+    "rapido": [
+      {
+        "proveedor": "openai",
+        "modelo": "gpt-6.1-terra",
+        "esfuerzo": "low"
+      },
+      {
+        "proveedor": "anthropic",
+        "modelo": "claude-haiku-5-5",
+        "esfuerzo": "low"
+      }
+    ],
+    "proyecto": [
+      {
+        "proveedor": "openai",
+        "modelo": "gpt-6.1-terra",
+        "esfuerzo": "medium"
+      },
+      {
+        "proveedor": "anthropic",
+        "modelo": "claude-sonnet-5-5",
+        "esfuerzo": "medium"
+      }
+    ],
+    "escritura": [
+      {
+        "proveedor": "anthropic",
+        "modelo": "claude-sonnet-5-5",
+        "esfuerzo": "medium"
+      },
+      {
+        "proveedor": "openai",
+        "modelo": "gpt-6.1-sol",
+        "esfuerzo": "medium"
+      }
+    ]
+  },
+  "precios": {
+    "claude-haiku-5-5": {
+      "entrada": 0.1,
+      "cacheLectura": 0.01,
+      "cacheEscritura": 0.125,
+      "salida": 0.5
+    },
+    "claude-sonnet-5-5": {
+      "entrada": 2,
+      "cacheLectura": 0.2,
+      "cacheEscritura": 2.5,
+      "salida": 10
+    },
+    "gpt-6-luna": {
+      "entrada": 0.1,
+      "cacheLectura": 0.01,
+      "cacheEscritura": 0.1,
+      "salida": 0.5
+    },
+    "gpt-6.1-terra": {
+      "entrada": 1,
+      "cacheLectura": 0.05,
+      "cacheEscritura": 1,
+      "salida": 5
+    },
+    "gpt-6.1-sol": {
+      "entrada": 2,
+      "cacheLectura": 0.1,
+      "cacheEscritura": 2,
+      "salida": 10
+    }
+  }
+}
