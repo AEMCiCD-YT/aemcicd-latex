@@ -175,7 +175,7 @@ test('PDF: firma, límite, todas las páginas etiquetadas, escaneados y limpieza
       getPage: async () => ({ getTextContent: async () => ({ items: [] }) }),
     }),
   })
-  await assert.rejects(extraerPdf(datos, 'a.pdf', escaneado), /OCR/)
+  await assert.rejects(extraerPdf(datos, 'a.pdf', escaneado), /escaneado/)
 })
 test('historial: intervalo acotado, solo diferencias del servidor y sin identidades', async () => {
   for (const entrada of [
@@ -461,4 +461,77 @@ test('código a algoritmo: crea un documento LaTeX aparte con paquetes y conserv
   )
   assert.equal(funcion('codigo_algoritmo').propuesta, undefined)
   assert.equal(funcion('codigo_algoritmo').respuesta, 'documento')
+})
+
+test('PDF bomba de descompresión: se rechaza en un proceso aparte sin bloquear el servidor', async () => {
+  const { extraerEnHijo } = await import('../../app/src/pdf-proyecto.mjs')
+  const zlib = await import('node:zlib')
+  // 20 páginas que reutilizan un flujo de ~300 KB comprimido que se expande a 300 MB.
+  const crudo = Buffer.concat([
+    Buffer.from('BT /F1 12 Tf 72 712 Td (Hola) Tj ET\n'),
+    Buffer.alloc(300 * 1024 * 1024, 0x20),
+  ])
+  const comp = zlib.deflateSync(crudo, { level: 9 })
+  const objs = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [' +
+      Array(20).fill('3 0 R').join(' ') +
+      '] /Count 20 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+  ]
+  const partes = [Buffer.from('%PDF-1.4\n')]
+  let largo = partes[0].length
+  const offs = []
+  const poner = b => {
+    partes.push(b)
+    largo += b.length
+  }
+  objs.forEach((o, i) => {
+    offs.push(largo)
+    poner(Buffer.from(`${i + 1} 0 obj\n${o}\nendobj\n`))
+  })
+  offs.push(largo)
+  poner(
+    Buffer.from(
+      `4 0 obj\n<< /Length ${comp.length} /Filter /FlateDecode >>\nstream\n`
+    )
+  )
+  poner(comp)
+  poner(Buffer.from('\nendstream\nendobj\n'))
+  offs.push(largo)
+  poner(
+    Buffer.from(
+      '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n'
+    )
+  )
+  const xref = largo
+  poner(
+    Buffer.from(
+      'xref\n0 6\n0000000000 65535 f \n' +
+        offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') +
+        `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
+    )
+  )
+  const pdf = Buffer.concat(partes)
+  assert.ok(pdf.length < 1024 * 1024, `PDF de prueba de ${pdf.length} bytes`)
+
+  let ticks = 0
+  const latido = setInterval(() => ticks++, 100)
+  const t0 = Date.now()
+  await assert.rejects(
+    extraerEnHijo(pdf, {
+      memoriaBytes: 1024 * 1024 * 1024,
+      cpuSegundos: 8,
+      tiempoMs: 8000,
+    }),
+    ErrorEntrada
+  )
+  clearInterval(latido)
+  const segundos = (Date.now() - t0) / 1000
+  // El proceso web siguió atendiendo: el temporizador corrió casi todas las veces previstas.
+  assert.ok(
+    ticks >= Math.floor(segundos * 10 * 0.7) - 1,
+    `ticks=${ticks} en ${segundos}s`
+  )
+  assert.ok(segundos < 12, `tardó ${segundos}s`)
 })

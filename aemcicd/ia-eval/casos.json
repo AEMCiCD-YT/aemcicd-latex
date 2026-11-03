@@ -1176,5 +1176,83 @@
       "referencias.bib": "@article{adn, title={Molecular structure of nucleic acids}, year={1953}, doi={10.1038/171737a0}}",
       "algoritmo.py": "def suma(datos):\n    total = 0\n    for valor in datos:\n        total += valor\n    return total"
     }
+  },
+  {
+    "id": "agente-tikz-libreria",
+    "tipo": "agente",
+    "funcion": "agente",
+    "entrada": {
+      "pregunta": "No compila, arréglalo.",
+      "archivo": "main.tex",
+      "cursor": 0,
+      "errores": [
+        {
+          "nivel": "error",
+          "mensaje": "Package pgfkeys Error: I do not know the key '/tikz/below', to which you passed 'of b', and I am going to ignore it.",
+          "archivo": "main.tex",
+          "linea": 8
+        },
+        {
+          "nivel": "error",
+          "mensaje": "Package pgf Error: Unknown arrow tip kind 'Stealth'.",
+          "archivo": "main.tex",
+          "linea": 7
+        }
+      ]
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{tikz}\n\\begin{document}\n\\begin{tikzpicture}[node distance=2cm]\n\\node (a) [draw] {Entrada};\n\\node (b) [draw, right of=a] {Proceso};\n\\draw[-{Stealth}] (a) -- (b);\n\\node (c) [draw, below=of b] {Salida};\n\\end{tikzpicture}\n\\end{document}\n"
+    },
+    "esperado": "Añade \\usetikzlibrary{positioning,arrows.meta} en el preámbulo (cambio aplicable); no reescribe el dibujo."
+  },
+  {
+    "id": "agente-tabla-margen",
+    "tipo": "agente",
+    "funcion": "agente",
+    "entrada": {
+      "pregunta": "La tabla se sale del margen, arréglala.",
+      "archivo": "main.tex",
+      "cursor": 0,
+      "errores": [
+        {
+          "nivel": "warning",
+          "mensaje": "Overfull \\hbox (312.4pt too wide) in paragraph at lines 4--10",
+          "archivo": "main.tex",
+          "linea": 4
+        }
+      ]
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\begin{document}\n\\section{Resultados}\n\\begin{tabular}{|l|l|l|l|l|l|}\n\\hline\nMuestra & Masa inicial (g) & Masa final (g) & Temperatura ambiente (°C) & Presión atmosférica (kPa) & Observaciones del grupo \\\\\n\\hline\nA & 12.31 & 11.98 & 21.4 & 101.2 & Sin cambios visibles durante la medición \\\\\n\\hline\n\\end{tabular}\n\\end{document}\n"
+    },
+    "esperado": "Usa tabularx/columnas p{} o \\resizebox con el paquete en el preámbulo; la tabla compila sin Overfull."
+  },
+  {
+    "id": "agente-diagrama-cursor",
+    "tipo": "agente",
+    "funcion": "agente",
+    "entrada": {
+      "pregunta": "Dibuja aquí el circuito con TikZ.",
+      "archivo": "main.tex",
+      "cursor": 179
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{tikz}\n\\begin{document}\n\\section{Montaje experimental}\nEl circuito tiene una fuente de 5 V, una resistencia de 220 $\\Omega$ y un LED en serie.\n\n\\section{Resultados}\n\\end{document}\n"
+    },
+    "esperado": "Inserción en el cursor (antes vacío) con un tikzpicture que compila con el preámbulo dado."
+  },
+  {
+    "id": "agente-solo-pregunta",
+    "tipo": "agente",
+    "funcion": "agente",
+    "entrada": {
+      "pregunta": "¿Para qué sirve \\usetikzlibrary? No cambies nada.",
+      "archivo": "main.tex",
+      "cursor": 0
+    },
+    "archivos": {
+      "main.tex": "\\documentclass{article}\n\\usepackage{tikz}\n\\begin{document}\n\\section{Montaje experimental}\nEl circuito tiene una fuente de 5 V, una resistencia de 220 $\\Omega$ y un LED en serie.\n\n\\section{Resultados}\n\\end{document}\n"
+    },
+    "esperado": "Explica sin proponer cambios."
   }
 ]

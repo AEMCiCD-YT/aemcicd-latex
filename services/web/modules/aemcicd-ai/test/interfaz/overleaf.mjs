@@ -57,9 +57,7 @@ async function abrirIA() {
     exact: true,
   })
   if (await activar.isVisible()) await activar.click()
-  await page
-    .getByRole('button', { name: 'Fórmula desde texto', exact: true })
-    .waitFor()
+  await page.getByRole('tab', { name: 'Conversación', exact: true }).waitFor()
 }
 let ultima
 await page.route('**/aemcicd-ai/consulta', async route => {
@@ -243,6 +241,7 @@ try {
     await page.waitForTimeout(350)
   }
   await abrirIA()
+  await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
   await page.getByText('Revisión y entrega', { exact: true }).click()
   await page
     .getByRole('button', { name: 'Revisor tipo jurado', exact: true })

@@ -102,6 +102,21 @@ export const lectorProyecto = crearLectorProyecto({
     ),
 })
 
+// addDoc/addFolder lanzan DuplicateNameError si ya hay un archivo (o un fileRef) con ese nombre,
+// o si dos peticiones crean lo mismo a la vez: se muestra un mensaje claro en vez de «Algo falló».
+async function sinChoque(crear, mensaje) {
+  try {
+    return await crear()
+  } catch (err) {
+    if (
+      err?.name === 'DuplicateNameError' ||
+      /duplicate|already exists/i.test(err?.message)
+    )
+      throw new ErrorEntrada(mensaje)
+    throw err
+  }
+}
+
 // Creación idempotente por la misma vía del árbol de archivos; nunca se sobrescribe un script.
 export async function guardarGrafica(projectId, userId, archivo, script) {
   if (
@@ -123,20 +138,28 @@ export async function guardarGrafica(projectId, userId, archivo, script) {
   const raiz = sesion.proyecto.rootFolder[0]
   let carpeta = (raiz.folders || []).find(f => f.name === 'graficas')
   if (!carpeta)
-    carpeta = await EditorController.promises.addFolder(
-      projectId,
-      raiz._id,
-      'graficas',
-      'aemcicd-ai',
-      userId
+    carpeta = await sinChoque(
+      () =>
+        EditorController.promises.addFolder(
+          projectId,
+          raiz._id,
+          'graficas',
+          'aemcicd-ai',
+          userId
+        ),
+      'Ya existe un archivo llamado «graficas» en la raíz del proyecto. Renómbralo e inténtalo de nuevo.'
     )
-  const doc = await EditorController.promises.addDoc(
-    projectId,
-    carpeta._id,
-    archivo.split('/')[1],
-    script.split('\n'),
-    'aemcicd-ai',
-    userId
+  const doc = await sinChoque(
+    () =>
+      EditorController.promises.addDoc(
+        projectId,
+        carpeta._id,
+        archivo.split('/')[1],
+        script.split('\n'),
+        'aemcicd-ai',
+        userId
+      ),
+    `Ya existe un archivo «${archivo}». Vuelve a intentarlo en unos segundos.`
   )
   return { id: String(doc._id), archivo }
 }
@@ -167,20 +190,28 @@ export async function guardarDocumento(
   const raiz = sesion.proyecto.rootFolder[0]
   let carpeta = (raiz.folders || []).find(f => f.name === 'ia-generados')
   if (!carpeta)
-    carpeta = await EditorController.promises.addFolder(
-      projectId,
-      raiz._id,
-      'ia-generados',
-      'aemcicd-ai',
-      userId
+    carpeta = await sinChoque(
+      () =>
+        EditorController.promises.addFolder(
+          projectId,
+          raiz._id,
+          'ia-generados',
+          'aemcicd-ai',
+          userId
+        ),
+      'Ya existe un archivo llamado «ia-generados» en la raíz del proyecto. Renómbralo e inténtalo de nuevo.'
     )
-  const doc = await EditorController.promises.addDoc(
-    projectId,
-    carpeta._id,
-    documento.archivo.split('/')[1],
-    contenido.split('\n'),
-    'aemcicd-ai',
-    userId
+  const doc = await sinChoque(
+    () =>
+      EditorController.promises.addDoc(
+        projectId,
+        carpeta._id,
+        documento.archivo.split('/')[1],
+        contenido.split('\n'),
+        'aemcicd-ai',
+        userId
+      ),
+    `Ya existe un archivo «${documento.archivo}». Vuelve a intentarlo en unos segundos.`
   )
   return { id: String(doc._id), archivo: documento.archivo }
 }

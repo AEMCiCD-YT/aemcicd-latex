@@ -230,10 +230,36 @@ export async function validarRespuesta(
           )
         desde = hasta = d.desde
       }
+    } else if (
+      !cambio.antes &&
+      contexto.cursor &&
+      contexto.cursor.ruta === cambio.archivo
+    ) {
+      // Agente: contenido nuevo en la posición del cursor. Sin texto que buscar, solo vale si el
+      // archivo no cambió desde que se leyó.
+      if (doc.huella !== contexto.cursor.huella)
+        throw new ErrorEntrada(
+          'El archivo cambió mientras respondía la IA. Vuelve a consultar.'
+        )
+      if (cambios.some(c => c.archivo === cambio.archivo && c.antes === ''))
+        throw new ErrorEntrada('La propuesta inserta dos veces en el cursor.')
+      desde = hasta = contexto.cursor.posicion
     } else {
       if (!cambio.antes)
         throw new ErrorEntrada(
           'La propuesta no identifica el texto que hay que reemplazar.'
+        )
+      // Agente: solo puede cambiar texto que se le mostró (archivo completo o la zona enviada).
+      if (
+        contexto.vistas &&
+        !contexto.vistas.some(
+          v =>
+            v.ruta === cambio.archivo &&
+            (v.completo || v.texto.includes(cambio.antes))
+        )
+      )
+        throw new ErrorEntrada(
+          'El cambio queda fuera de lo que se envió a la IA. Vuelve a consultar.'
         )
       const lugar = ubicar(doc.texto, cambio.antes)
       if (!lugar)

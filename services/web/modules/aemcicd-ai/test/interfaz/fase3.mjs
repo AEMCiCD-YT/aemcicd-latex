@@ -130,6 +130,7 @@ async function abrir() {
   await page
     .getByRole('button', { name: 'Crear presentación Beamer', exact: true })
     .count()
+  await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
   await page.getByText('Investigación y PDF', { exact: true }).waitFor()
 }
 async function confirmar() {
@@ -164,6 +165,7 @@ try {
     'pdfs',
     'pregunta',
   ])
+  await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
   await page
     .getByRole('button', {
       name: 'Buscar y proponer bibliografía',
@@ -220,17 +222,16 @@ try {
   assert.equal(consultas.at(-1).entrada.desdeVersion, 1)
   assert.equal(consultas.at(-1).entrada.hastaVersion, 3)
   await abrir()
-  await page.getByLabel('Modo de conversación').selectOption('tutor_latex')
+  await page.getByRole('button', { name: /^Aprender LaTeX/ }).click()
   assert.equal(
-    await page
-      .getByLabel('Usar todo el proyecto', { exact: true })
-      .isDisabled(),
-    true
+    await page.getByRole('button', { name: 'Todo el proyecto' }).count(),
+    0,
+    'el modo aprender no envía el proyecto'
   )
   await page
-    .getByLabel('Pregunta para la IA', { exact: true })
+    .getByLabel('Mensaje para la IA', { exact: true })
     .fill('Enséñame label y ref.')
-  await page.getByRole('button', { name: 'Preguntar', exact: true }).click()
+  await page.getByRole('button', { name: 'Enviar', exact: true }).click()
   await page
     .getByText(
       'Respuesta simulada: revisa el resultado. Fuente estudio.pdf, página 1.',

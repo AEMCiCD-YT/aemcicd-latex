@@ -211,6 +211,17 @@ export function Cabecera({ title }: { title: string }) {
   return <h2>{title}</h2>
 }
 
+// Log de la última compilación: las pruebas lo fijan en window.bancoLog.
+export const useDetachCompileContext = () => ({
+  logEntries: (window as unknown as { bancoLog?: unknown }).bancoLog as
+    | undefined
+    | { errors: { level: string; message: string }[] },
+  compiling: false,
+  startCompile: () => {
+    ;(window as unknown as { compilaciones?: number }).compilaciones =
+      ((window as unknown as { compilaciones?: number }).compilaciones || 0) + 1
+  },
+})
 export const useRootDoc = () => () => ({ rootResourcePath: 'main.tex' })
 export const useLayoutContext = () => ({
   setView: (vista: string) => Object.assign(window, { vistaElegida: vista }),

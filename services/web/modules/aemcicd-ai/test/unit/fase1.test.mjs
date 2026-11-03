@@ -566,3 +566,36 @@ test('corregir: incluye el preámbulo (del archivo o del principal) y acepta añ
     /fuera de las líneas/
   )
 })
+
+test('foto a LaTeX: varias páginas, salida proporcional, confirmación y estimación sin imágenes', () => {
+  const def = funcion('foto_latex')
+  const una = def.preparar({ imagen: { base64: PNG } }, {})
+  assert.equal(una.requiereConfirmacion, false)
+  const cinco = def.preparar(
+    { imagenes: Array.from({ length: 5 }, () => ({ base64: PNG })) },
+    {}
+  )
+  const imagenes = cinco.mensajes[0].content.filter(p => p.type === 'image')
+  assert.equal(imagenes.length, 5)
+  assert.ok(
+    JSON.stringify(cinco.mensajes[0].content).includes(
+      'pagina=\\"5\\" de=\\"5\\"'
+    )
+  )
+  assert.equal(cinco.requiereConfirmacion, true)
+  assert.ok(cinco.maxSalida > una.maxSalida)
+  const estimada = def.preparar({ soloEstimar: true, paginas: 5 }, {})
+  assert.equal(estimada.tokensVisuales, cinco.tokensVisuales)
+  assert.equal(estimada.maxSalida, cinco.maxSalida)
+  assert.equal(
+    estimada.mensajes[0].content.filter(p => p.type === 'image').length,
+    0
+  )
+  for (const malo of [
+    { imagenes: [] },
+    { imagenes: Array.from({ length: 21 }, () => ({ base64: PNG })) },
+    { soloEstimar: true, paginas: 0 },
+    { soloEstimar: true, paginas: 21 },
+  ])
+    assert.throws(() => def.preparar(malo, {}), ErrorEntrada)
+})

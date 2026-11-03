@@ -16,18 +16,30 @@ const limiteGeneral = new RateLimiter('aemcicd-ai-general', {
   duration: 60,
 })
 
+const sesionJson = (req, res, next) =>
+  SessionManager.getLoggedInUserId(req.session)
+    ? next()
+    : res.status(401).json({
+        mensaje:
+          'Inicia sesión en el servidor LaTeX para usar el soporte con tu crédito.',
+      })
+
 export default {
+  // Fuera de la protección CSRF general de Overleaf: la plataforma (otro origen) no recibe el
+  // token CSRF de la sesión, sino uno propio que el controlador valida (token-soporte.mjs).
+  applyNonCsrfRouter(webRouter) {
+    webRouter.post(
+      '/aemcicd-ai/soporte',
+      sesionJson,
+      AuthenticationController.requireLogin(),
+      RateLimiterMiddleware.rateLimit(limiteConsultas),
+      AiController.soporte
+    )
+  },
   apply(webRouter) {
     logger.debug({}, 'Init aemcicd-ai router')
     const login = AuthenticationController.requireLogin()
     const general = RateLimiterMiddleware.rateLimit(limiteGeneral)
-    const sesionJson = (req, res, next) =>
-      SessionManager.getLoggedInUserId(req.session)
-        ? next()
-        : res.status(401).json({
-            mensaje:
-              'Inicia sesión en el servidor LaTeX para usar el soporte con tu crédito.',
-          })
     const leer = [
       login,
       AuthorizationMiddleware.blockRestrictedUserFromProject,
@@ -77,13 +89,6 @@ export default {
       general,
       AiController.soporteSesion
     )
-    webRouter.post(
-      '/aemcicd-ai/soporte',
-      sesionJson,
-      login,
-      RateLimiterMiddleware.rateLimit(limiteConsultas),
-      AiController.soporte
-    )
     webRouter.get(
       '/aemcicd-ai/resumen',
       sesionJson,
@@ -115,7 +120,8 @@ export default {
     webRouter.post(
       '/project/:Project_id/aemcicd-ai/estimacion',
       ...leer,
-      general,
+      // Mismo límite que las consultas: prepara el contexto (PDF, Crossref) aunque no cobre.
+      RateLimiterMiddleware.rateLimit(limiteConsultas),
       AiController.estimar
     )
     webRouter.get(

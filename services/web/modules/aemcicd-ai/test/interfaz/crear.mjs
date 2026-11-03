@@ -31,6 +31,7 @@ const adaptadores = [
   'history-ot',
   'use-root-doc',
   'layout-context',
+  'detach-compile-context',
 ]
 const componentes = {
   'ol-button': 'Boton',

@@ -29,9 +29,7 @@ try {
     const tab = p.getByRole('tab', { name: 'Asistente de IA', exact: true })
     if (!(await tab.getAttribute('class')).includes('open-rail'))
       await tab.click()
-    await p
-      .getByRole('button', { name: 'Fórmula desde texto', exact: true })
-      .waitFor()
+    await p.getByRole('tab', { name: 'Conversación', exact: true }).waitFor()
     await p.screenshot({ path: join(salida, `panel-real-${tema}.png`) })
     await p
       .locator('.cm-content')

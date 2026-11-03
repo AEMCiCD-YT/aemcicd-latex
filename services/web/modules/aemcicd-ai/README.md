@@ -41,12 +41,33 @@ caracteres; si se excede, se pide reducirlo). El panel permite crear una plantil
 vía de creación de archivos de Overleaf, que también avisa a los colaboradores. No sobrescribe
 un archivo existente.
 
-Las imágenes y los PDF de una sola página se rasterizan en el navegador a PNG de hasta 1600 px
-por lado. El PDF original no se envía al servidor; el selector rechaza documentos de varias
-páginas. El servidor comprueba firma de PNG/JPEG/WebP, dimensiones, base64 y límite de 5 MiB,
-sin confiar en el MIME ni en el nombre recibido. Solo `/foto` usa un parser JSON de 7 MiB para
-admitir el base64; los demás límites de Express permanecen intactos. La imagen se envía como
-bloque de imagen del AI SDK. No se guarda en archivos, eventos ni Mongo.
+Las imágenes se reducen en el navegador a 1600 px por lado. Un PDF se convierte en el navegador
+en imágenes JPEG de sus páginas (hasta 20 por consulta; si tiene más, el estudiante elige el
+rango). El PDF original no se envía al servidor. El servidor comprueba firma de PNG/JPEG/WebP,
+dimensiones, base64, 5 MiB por página y 20 MiB en total, sin confiar en el MIME ni en el nombre
+recibido. Solo `/foto` usa un parser JSON de 28 MiB; los demás límites de Express permanecen
+intactos. La salida máxima crece con las páginas (3000 tokens por página) y, con más de dos
+páginas, el panel muestra el costo máximo antes de enviar (`soloEstimar` + `paginas`, sin
+reenviar las imágenes). Las imágenes no se guardan en archivos, eventos ni Mongo.
+
+## Agente del documento (chat del panel)
+
+El chat del panel usa la función `agente` (ruta `rapido`, o `proyecto` con «Todo el proyecto»).
+El navegador indica solo **qué** mirar; el servidor lee el texto:
+
+- `archivo`, `cursor` y, si hay selección, `desde`/`hasta` del archivo abierto. El servidor
+  envía el archivo completo (o ±150 líneas del cursor si pasa de 60 000 caracteres) y su
+  preámbulo, para poder añadir `\usepackage` o `\usetikzlibrary`.
+- `errores`: hasta 10 diagnósticos de la última compilación (errores, advertencias y cajas
+  `Overfull`), con unas líneas alrededor si están en otro archivo.
+- `historial`: los últimos turnos del chat (no se guardan en el servidor; máximo 16 000
+  caracteres).
+
+Los cambios solo pueden tocar texto que la IA vio, o insertar en el cursor (`antes: ""`, con la
+huella del archivo). Al pulsar «Aplicar», el panel recompila y, si quedan errores, ofrece
+«Seguir arreglando» (hasta tres veces). Sobre la lista del log aparece «Arreglar los errores con
+IA», que abre el chat con todos los errores. Las funciones fijas (fase 2 y 3, atajos, «Aprender
+LaTeX», instrucciones del proyecto) están en la pestaña «Herramientas».
 
 ## Fase 2: revisión, gráficas y plataforma
 

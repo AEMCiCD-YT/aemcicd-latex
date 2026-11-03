@@ -144,7 +144,7 @@ export function funcionesFase3(sistema) {
                           })
                         )
                       : '',
-                    dato('seleccion', pregunta),
+                    dato('peticion_del_estudiante', pregunta),
                   ]
                     .filter(Boolean)
                     .join('\n\n'),

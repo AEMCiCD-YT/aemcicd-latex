@@ -92,9 +92,11 @@ y la respuesta JSON se acepta aunque venga entre cercas ```json. La escritura se
 con la misma vía colaborativa del editor, y luego se registra la ruta aceptada. No se guardan
 prompts, imágenes ni respuestas.
 
-El selector rasteriza en el navegador las imágenes y los PDF de una página a PNG de hasta
-1600 px; el servidor valida la firma, dimensiones y máximo de 5 MiB del resultado. No se envía
-el PDF original. Los proyectos completos tienen un límite configurable de 150 000 tokens
+El selector convierte en el navegador las imágenes, y cada página de un PDF (hasta 20 por
+consulta, con elección de rango si hay más), a imágenes de hasta 1600 px; el servidor valida la
+firma, dimensiones, 5 MiB por página y 20 MiB en total. No se envía el PDF original. Con más de
+dos páginas se muestra el costo máximo antes de enviar.
+Los proyectos completos tienen un límite configurable de 150 000 tokens
 estimados; si se excede, no se envía un contexto parcial. La estimación incluye la alternativa
 y se vuelve a comprobar al confirmar; un costo mayor requiere una nueva confirmación.
 
@@ -181,6 +183,15 @@ La plataforma y `latex-sync` amplían sus listas cerradas de funciones para admi
 agregados sin permitir contenido ni identificadores adicionales. Los términos 1.3 publicados
 informan de Crossref y del texto de PDF. [Pruebas locales](ia-fase-3/verificacion.md) y
 [comprobaciones del despliegue](ia-fase-3/despliegue.md) distinguen lo verificado y lo pendiente.
+
+### Agente del documento (3 de noviembre de 2026)
+
+Tras las pruebas con usuarios, el chat dejó de ser una conversación aparte del código: ve el
+archivo abierto, el cursor, la selección y los errores de la última compilación, recuerda los
+turnos anteriores y propone cambios aplicables (incluida la inserción en el cursor). Al aplicar
+un cambio se recompila y, si siguen los errores, se ofrece seguir arreglando hasta tres veces.
+El log tiene un botón «Arreglar los errores con IA». El panel se divide en «Conversación» y
+«Herramientas». Detalle técnico en `services/web/modules/aemcicd-ai/README.md`.
 
 ### Fuera de alcance
 

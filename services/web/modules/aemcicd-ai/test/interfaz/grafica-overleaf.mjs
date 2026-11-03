@@ -70,6 +70,7 @@ try {
   await page.goto(`http://localhost:18182/project/${ids.projectId}`)
   await page.locator('.cm-content').first().waitFor()
   await page.getByRole('tab', { name: 'Asistente de IA', exact: true }).click()
+  await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
   await page.getByText('Gráfica desde datos', { exact: true }).click()
   await page
     .getByLabel('Datos de Excel o CSV', { exact: true })

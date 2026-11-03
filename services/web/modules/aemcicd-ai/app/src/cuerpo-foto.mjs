@@ -4,7 +4,7 @@ import express from 'express'
 // sesión, CSRF y autorización se siguen comprobando en el router habitual.
 export function cuerpoFoto(app) {
   app.use(/^\/project\/[a-f\d]{24}\/aemcicd-ai\/foto\/?$/i, (req, res, next) =>
-    express.json({ limit: '7mb', strict: true, inflate: false })(
+    express.json({ limit: '28mb', strict: true, inflate: false })(
       req,
       res,
       err => {

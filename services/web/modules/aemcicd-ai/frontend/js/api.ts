@@ -161,7 +161,9 @@ export async function consultar(
     maximoAceptadoMicro?: number
   },
   alTexto: (texto: string) => void,
-  senal: AbortSignal
+  senal: AbortSignal,
+  // Señal de que la IA sigue escribiendo una respuesta con cambios (sin explicación aún).
+  alProgreso?: (caracteres: number) => void
 ): Promise<FinConsulta | ErrorConsulta> {
   const res = await fetch(
     ruta(projectId, cuerpo.funcion === 'foto_latex' ? 'foto' : 'consulta'),
@@ -207,6 +209,7 @@ export async function consultar(
       if (!linea) continue
       const obj = JSON.parse(linea)
       if (obj.tipo === 'texto') alTexto(obj.texto)
+      else if (obj.tipo === 'progreso') alProgreso?.(obj.caracteres)
       else final = obj
     }
   }

@@ -29,7 +29,7 @@ test('solo la ruta de foto admite el cuerpo ampliado; rechaza JSON mal formado y
       (
         await enviar(
           'foto',
-          JSON.stringify({ imagen: 'a'.repeat(7 * 1024 * 1024) })
+          JSON.stringify({ imagen: 'a'.repeat(29 * 1024 * 1024) })
         )
       ).status,
       413

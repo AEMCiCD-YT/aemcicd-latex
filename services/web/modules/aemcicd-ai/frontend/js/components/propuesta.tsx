@@ -96,8 +96,16 @@ export default function Propuesta({
         await doc.withTrackedChanges(user.id, escribir)
       }
       setEstado('aplicada')
+      // El servidor ya tiene el cambio: el panel puede recompilar y revisar (agente).
+      await openDocs.awaitBufferedOps(AbortSignal.timeout(5000)).catch(() => {})
+      window.dispatchEvent(
+        new CustomEvent('aemcicd-ai:cambio-aplicado', {
+          detail: { eventoId, archivo: cambio.archivo },
+        })
+      )
       if (!declaracion) {
-        openTab('review-panel')
+        // El chat sigue a la vista (seguimiento «recompilar y revisar»); la propuesta se
+        // revisa desde el enlace «Ver en revisión».
         const nombre =
           [user.first_name, user.last_name].filter(Boolean).join(' ') ||
           'el estudiante'
@@ -172,8 +180,20 @@ export default function Propuesta({
           {estado === 'aplicada'
             ? declaracion
               ? 'Cambio aplicado.'
-              : 'Propuesta enviada al Panel de revisión.'
+              : 'Propuesta enviada a Control de cambios (ya cuenta al compilar).'
             : 'Propuesta descartada.'}
+          {estado === 'aplicada' && !declaracion && (
+            <>
+              {' '}
+              <OLButton
+                size="sm"
+                variant="link"
+                onClick={() => openTab('review-panel')}
+              >
+                Ver en revisión
+              </OLButton>
+            </>
+          )}
         </p>
       )}
       {error && (

@@ -262,7 +262,13 @@ test('registro de uso del proyecto: se añade una vez por evento y se puede vaci
   const projectId = new ObjectId()
   const s = servicio({ modelos: { 'gpt-6-luna': modeloQueResponde(['a']) } })
   await s.activar(userId, '2026-11')
-  const r = await consultar(s, userId)
+  const r = await consultar(s, userId, { projectId })
+  // Un evento sin proyecto (como el soporte) no se registra en ningún proyecto.
+  const sinProyecto = await consultar(s, userId)
+  assert.equal(
+    await s.registrar(projectId, userId, sinProyecto.eventoId, 'x'),
+    false
+  )
   assert.equal(
     await s.registrar(projectId, userId, r.eventoId, 'en main.tex'),
     true

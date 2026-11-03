@@ -118,6 +118,34 @@ function corregir(entrada, contexto) {
   return `Explica y corrige este diagnóstico de compilación. Propón el cambio mínimo y los paquetes necesarios. Si falta un paquete, propón añadir \\usepackage al preámbulo como un cambio más (por ejemplo, reemplazando la línea \\documentclass por ella misma seguida del paquete).\n${dato('log', mensaje + '\n' + bruto)}\n${fragmento ? `Archivo ${JSON.stringify(fragmento.ruta)}, desde la línea ${fragmento.primeraLinea}:\n${documentoComoDatos(fragmento)}` : 'No hay ubicación del proyecto asociada al log. Explica cómo resolverlo y devuelve cambios=[].'}${conPreambulo ? `\nPreámbulo de ${JSON.stringify(pre.ruta)} (hasta \\begin{document}):\n${documentoComoDatos(pre)}` : ''}`
 }
 
+// Instrucciones del agente del documento (chat del panel). Se suman a SISTEMA_BASE y al formato
+// de cambios.
+const AGENTE = `Trabajas integrado en el editor, como un copiloto: ves el archivo abierto, la
+posición del cursor, lo seleccionado, los errores de la última compilación, la lista de archivos y
+la conversación.
+- Si el estudiante pide crear, arreglar o cambiar algo del documento («no compila», «arréglalo»,
+  «haz un diagrama», «la tabla se sale del margen»), entrega los cambios en «cambios»: no le pidas
+  que copie código ni le muestres el código solo en la explicación.
+- Para añadir contenido nuevo donde está el cursor, usa antes="" en el archivo abierto. Para
+  modificar algo existente, copia en «antes» el texto exacto actual (solo de lo que se te mostró).
+- Si hay errores de compilación y te piden arreglarlos, corrige la causa de cada error mostrado,
+  incluidos los paquetes o librerías de TikZ que falten en el preámbulo (como otro cambio).
+- Si una tabla o figura se sale del margen, ajústala (p. ej., tabularx, \\resizebox o
+  \\small) en lugar de solo explicarlo.
+- Si solo hace una pregunta, responde en la explicación y deja cambios=[].
+- Haz cambios pequeños y localizados; no reescribas el archivo entero.
+- La explicación es breve: qué cambiaste y por qué.`
+
+function vistaComoDatos(v) {
+  const atributos = v.completo
+    ? ` ruta="${escapar(v.ruta)}"`
+    : ` ruta="${escapar(v.ruta)}" desde_linea="${v.primeraLinea}" parcial="si"`
+  return dato('documento', v.texto, atributos)
+}
+
+export const MAX_PAGINAS_FOTO = 20
+const MAX_TOTAL_FOTO_BYTES = 20 * 1024 * 1024
+
 export const FUNCIONES = {
   // Pregunta libre sobre LaTeX, con la selección del editor como contexto opcional. Es la primera
   // función y sirve para probar la cadena completa (crédito, enrutador, 👍/👎).
@@ -221,36 +249,120 @@ export const FUNCIONES = {
       }
     },
   },
+  // Agente del documento: el chat del panel, con el contexto del editor y cambios aplicables.
+  agente: {
+    ...propuesta('rapido', 'trabajó en el documento', () => ''),
+    maxSalida: 8000,
+    usaContextoEditor: true,
+    preparar(entrada, contexto = {}) {
+      const pregunta = texto(entrada?.pregunta, 4000, 'El mensaje')
+      const partes = [instrucciones(contexto)]
+      if (contexto.archivos?.length)
+        partes.push(dato('archivos_del_proyecto', contexto.archivos.join('\n')))
+      for (const v of contexto.vistas || []) partes.push(vistaComoDatos(v))
+      if (contexto.abierto)
+        partes.push(
+          `Archivo abierto en el editor: ${JSON.stringify(contexto.abierto)}.` +
+            (contexto.cursor
+              ? ` El cursor está en la línea ${contexto.cursor.linea}; antes="" inserta ahí.`
+              : ' No hay posición de cursor: para añadir contenido, reemplaza un texto existente.')
+        )
+      if (contexto.seleccionAgente)
+        partes.push(
+          dato(
+            'seleccion',
+            contexto.seleccionAgente.texto,
+            ` ruta="${escapar(contexto.seleccionAgente.ruta)}"`
+          )
+        )
+      if (contexto.errores?.length)
+        partes.push(
+          'Errores y advertencias de la última compilación:\n' +
+            dato(
+              'log',
+              contexto.errores
+                .map(
+                  e =>
+                    `[${e.nivel}] ${e.archivo || '?'}${e.linea ? ':' + e.linea : ''} ${e.mensaje}${e.detalle ? '\n' + e.detalle : ''}`
+                )
+                .join('\n\n')
+            )
+        )
+      partes.push(pregunta)
+      return {
+        sistema: SISTEMA_BASE + '\n\n' + FORMATO_CAMBIOS + '\n\n' + AGENTE,
+        nivel: contexto.usaProyecto ? 'proyecto' : undefined,
+        requiereConfirmacion: Boolean(contexto.usaProyecto),
+        mensajes: [
+          ...(contexto.historial || []),
+          { role: 'user', content: partes.filter(Boolean).join('\n\n') },
+        ],
+      }
+    },
+  },
+
+  // Foto o PDF a LaTeX. Un PDF llega como imágenes de sus páginas (hasta MAX_PAGINAS_FOTO),
+  // convertidas en el navegador: el servidor nunca abre el PDF. La salida crece con las páginas.
   foto_latex: {
     ...propuesta('escritura', 'transcribió una imagen', () => ''),
+    maxSalida: 3000 * MAX_PAGINAS_FOTO,
     preparar(entrada, contexto = {}) {
-      const imagen = validarImagen(entrada?.imagen)
+      const lista = Array.isArray(entrada?.imagenes)
+        ? entrada.imagenes
+        : entrada?.imagen
+          ? [entrada.imagen]
+          : []
+      // Estimación previa sin reenviar las imágenes: solo el número de páginas.
+      const soloEstimar = entrada?.soloEstimar === true
+      const paginas = soloEstimar ? entrada.paginas : lista.length
+      if (
+        !Number.isInteger(paginas) ||
+        paginas < 1 ||
+        paginas > MAX_PAGINAS_FOTO
+      )
+        throw new ErrorEntrada(
+          `Sube una imagen o un PDF de hasta ${MAX_PAGINAS_FOTO} páginas por consulta.`
+        )
+      const imagenes = soloEstimar ? [] : lista.map(validarImagen)
+      const total = imagenes.reduce((s, i) => s + i.datos.length, 0)
+      if (total > MAX_TOTAL_FOTO_BYTES)
+        throw new ErrorEntrada(
+          'Las páginas superan 20 MB en total. Elige menos páginas.'
+        )
       const pregunta =
         opcional(entrada?.pregunta, 4000, 'La descripción') ||
-        'Transcribe el contenido de esta imagen a LaTeX. No inventes las partes ilegibles: indícalas.'
+        (paginas > 1
+          ? `Transcribe a LaTeX el contenido de estas ${paginas} páginas, en orden. No inventes las partes ilegibles: indícalas.`
+          : 'Transcribe el contenido de esta imagen a LaTeX. No inventes las partes ilegibles: indícalas.')
+      const contenido = [
+        {
+          type: 'text',
+          text: [
+            instrucciones(contexto),
+            dato('peticion_del_estudiante', pregunta),
+            destino(contexto),
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
+        },
+      ]
+      imagenes.forEach((imagen, i) => {
+        contenido.push(
+          {
+            type: 'text',
+            text: `<imagen_del_estudiante pagina="${i + 1}" de="${paginas}">`,
+          },
+          { type: 'image', image: imagen.datos, mediaType: imagen.tipo },
+          { type: 'text', text: '</imagen_del_estudiante>' }
+        )
+      })
       return {
         sistema: SISTEMA_BASE + '\n\n' + FORMATO_CAMBIOS,
-        tokensVisuales: 16000,
-        mensajes: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: [
-                  instrucciones(contexto),
-                  dato('seleccion', pregunta),
-                  destino(contexto),
-                  '<imagen_del_estudiante>',
-                ]
-                  .filter(Boolean)
-                  .join('\n\n'),
-              },
-              { type: 'image', image: imagen.datos, mediaType: imagen.tipo },
-              { type: 'text', text: '</imagen_del_estudiante>' },
-            ],
-          },
-        ],
+        // ~1600 tokens por imagen de 1600 px en ambos proveedores; se reserva con margen.
+        tokensVisuales: 2500 * paginas,
+        maxSalida: Math.min(3000 * paginas + 1000, 3000 * MAX_PAGINAS_FOTO),
+        requiereConfirmacion: paginas > 2,
+        mensajes: [{ role: 'user', content: contenido }],
       }
     },
   },

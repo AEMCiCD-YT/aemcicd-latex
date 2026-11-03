@@ -48,6 +48,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
 const errores = []
 page.on('pageerror', e => errores.push(e.message))
 const peticiones = []
+const estimaciones = []
 const registros = []
 const comentariosPublicados = []
 await page.route('**/project/*/thread/*/messages', async route => {
@@ -76,10 +77,12 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
     return route.fulfill({
       json: body ? { id: 'doc-main' } : { existe: false },
     })
-  if (accion === 'estimacion')
+  if (accion === 'estimacion') {
+    estimaciones.push(body)
     return route.fulfill({
       json: { tokensEntrada: 2500, maximoMicro: 40000, modelos: [] },
     })
+  }
   if (accion === 'validar-cambio') return route.fulfill({ json: body.cambio })
   if (accion === 'validar-comentario')
     return route.fulfill({ json: body.comentario })
@@ -145,7 +148,10 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
     despues,
     huella: createHash('sha256').update(original).digest('hex'),
   }
-  const chat = body.funcion === 'chat_proyecto' || body.funcion === 'pregunta'
+  const chat =
+    body.funcion === 'chat_proyecto' ||
+    body.funcion === 'pregunta' ||
+    (body.funcion === 'agente' && body.entrada.usarProyecto)
   const extra =
     body.funcion === 'revisor_jurado'
       ? {
@@ -204,10 +210,13 @@ await page.route('**/project/*/aemcicd-ai/*', async route => {
 
 async function abrir(parametros = '') {
   await page.goto(url + '/' + parametros)
-  await page
-    .getByRole('button', { name: 'Fórmula desde texto', exact: true })
-    .waitFor()
+  await page.getByRole('tab', { name: 'Conversación', exact: true }).waitFor()
 }
+async function herramientas() {
+  await page.getByRole('tab', { name: 'Herramientas', exact: true }).click()
+}
+const enviar = () =>
+  page.getByRole('button', { name: 'Enviar', exact: true }).click()
 async function corregir() {
   await page
     .getByRole('button', { name: 'Corregir con IA', exact: true })
@@ -264,7 +273,7 @@ try {
       .getByRole('button', { name: 'Enviar a revisión', exact: true })
       .click()
     await page
-      .getByText('Propuesta enviada al Panel de revisión.', { exact: true })
+      .getByText('Propuesta enviada a Control de cambios', { exact: false })
       .waitFor()
     await registroGuardado
     assert.equal(
@@ -295,10 +304,9 @@ try {
   }
 
   await abrir()
-  await page
-    .getByRole('button', { name: 'Fórmula desde texto', exact: true })
-    .click()
-  await page.getByRole('button', { name: 'Preguntar', exact: true }).click()
+  await herramientas()
+  await page.getByRole('button', { name: /^Fórmula desde texto/ }).click()
+  await enviar()
   await page.getByRole('button', { name: 'Descartar', exact: true }).waitFor()
   assert.equal(peticiones.at(-1).funcion, 'formula_texto')
   await page.getByRole('button', { name: 'Descartar', exact: true }).click()
@@ -342,12 +350,12 @@ try {
   )
 
   await abrir()
-  await page.getByLabel('Usar todo el proyecto', { exact: true }).check()
+  await page.getByRole('button', { name: 'Todo el proyecto' }).click()
   await page
-    .getByLabel('Pregunta para la IA')
+    .getByLabel('Mensaje para la IA')
     .fill('¿Qué falta en este proyecto?')
   const antesDeEstimar = peticiones.length
-  await page.getByRole('button', { name: 'Preguntar', exact: true }).click()
+  await enviar()
   await page.getByRole('button', { name: 'Consultar con este costo' }).waitFor()
   assert.equal(peticiones.length, antesDeEstimar)
   await page.getByRole('button', { name: 'Consultar con este costo' }).click()
@@ -357,6 +365,64 @@ try {
     })
     .waitFor()
   assert.equal(peticiones.at(-1).maximoAceptadoMicro, 40000)
+  assert.equal(peticiones.at(-1).funcion, 'agente')
+  assert.equal(peticiones.at(-1).entrada.usarProyecto, true)
+
+  // Agente: contexto del editor (archivo, cursor, selección, errores) e historial.
+  await abrir()
+  await page.evaluate(() => {
+    window.bancoLog = {
+      errors: [
+        {
+          level: 'error',
+          message: 'Undefined control sequence',
+          file: './main.tex',
+          line: 1,
+          content: 'l.1 \\mathbb',
+        },
+      ],
+      warnings: [],
+      typesetting: [
+        { level: 'typesetting', message: 'Overfull \\hbox (40pt too wide)' },
+        { level: 'typesetting', message: 'Underfull \\hbox' },
+      ],
+    }
+    const v = window.bancoIA.view
+    v.dispatch({ selection: { anchor: 4, head: 12 } })
+  })
+  await page.getByRole('button', { name: /2 avisos|1 error/ }).waitFor()
+  await page.getByRole('button', { name: '1 línea' }).waitFor()
+  await page.getByLabel('Mensaje para la IA').fill('No compila, arréglalo')
+  await enviar()
+  await page.getByRole('button', { name: 'Descartar', exact: true }).waitFor()
+  const agente = peticiones.at(-1)
+  assert.equal(agente.funcion, 'agente')
+  assert.equal(agente.entrada.archivo, 'main.tex')
+  assert.equal(agente.entrada.cursor, 12)
+  assert.deepEqual([agente.entrada.desde, agente.entrada.hasta], [4, 12])
+  assert.equal(
+    agente.entrada.errores.length,
+    2,
+    'error + Overfull, sin Underfull'
+  )
+  assert.equal(agente.entrada.errores[0].archivo, 'main.tex')
+  assert.equal(agente.entrada.historial, undefined)
+  assert.equal(
+    agente.entrada.texto,
+    undefined,
+    'el navegador no envía el texto'
+  )
+  await page.getByLabel('Mensaje para la IA').fill('¿Y ahora?')
+  await enviar()
+  await page
+    .getByRole('button', { name: 'Descartar', exact: true })
+    .nth(1)
+    .waitFor()
+  assert.equal(peticiones.at(-1).entrada.historial.length, 2)
+  assert.equal(peticiones.at(-1).entrada.historial[0].rol, 'estudiante')
+  await page.evaluate(() => {
+    window.bancoLog = undefined
+  })
 
   await abrir()
   await corregir()
@@ -383,25 +449,43 @@ try {
     mimeType: 'application/pdf',
     buffer: pdfSintetico(2),
   })
-  await page
-    .getByText('Elige un PDF de una sola página.', { exact: true })
-    .waitFor()
-  await page.locator('input[type=file]').setInputFiles({
-    name: 'una-pagina.pdf',
-    mimeType: 'application/pdf',
-    buffer: pdfSintetico(1),
-  })
-  await page.getByText('una-pagina.pdf', { exact: false }).waitFor()
-  await page.getByRole('button', { name: 'Preguntar', exact: true }).click()
+  await page.getByText('2 págs.', { exact: false }).waitFor()
+  await enviar()
   await page
     .getByRole('button', { name: 'Enviar a revisión', exact: true })
     .waitFor()
   assert.equal(peticiones.at(-1).funcion, 'foto_latex')
-  assert.ok(peticiones.at(-1).entrada.imagen.base64.startsWith('iVBOR'))
-  assert.equal(peticiones.at(-1).entrada.imagen.tipo, undefined)
+  assert.equal(peticiones.at(-1).entrada.imagenes.length, 2)
+  assert.ok(peticiones.at(-1).entrada.imagenes[0].base64.startsWith('/9j/'))
+  assert.equal(peticiones.at(-1).entrada.imagenes[0].tipo, undefined)
+
+  // Más de 20 páginas: se elige el rango; más de 2 páginas: se estima antes.
+  await abrir()
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'largo.pdf',
+    mimeType: 'application/pdf',
+    buffer: pdfSintetico(25),
+  })
+  await page.getByText('El PDF tiene 25 páginas.', { exact: false }).waitFor()
+  await page.getByLabel('Desde', { exact: true }).fill('3')
+  await page.getByLabel('Hasta', { exact: true }).fill('6')
+  await page.getByRole('button', { name: 'Usar estas páginas' }).click()
+  await page.getByText('págs. 3–6', { exact: false }).waitFor()
+  const antesFoto = peticiones.length
+  await enviar()
+  await page.getByRole('button', { name: 'Consultar con este costo' }).click()
+  await page
+    .getByRole('button', { name: 'Enviar a revisión', exact: true })
+    .last()
+    .waitFor()
+  assert.equal(peticiones.length, antesFoto + 1)
+  assert.equal(peticiones.at(-1).entrada.imagenes.length, 4)
+  assert.equal(estimaciones.at(-1).entrada.paginas, 4)
+  assert.equal(estimaciones.at(-1).entrada.imagenes, undefined)
 
   for (const modo of ['', '?history', '?oscuro']) {
     await abrir(modo)
+    await herramientas()
     await page.getByText('Revisión y entrega', { exact: true }).click()
     await page
       .getByRole('button', { name: 'Revisor tipo jurado', exact: true })
@@ -438,6 +522,7 @@ try {
   }
 
   await abrir()
+  await herramientas()
   await page.getByText('Gráfica desde datos', { exact: true }).click()
   await page
     .getByLabel('Datos de Excel o CSV', { exact: true })
@@ -471,6 +556,7 @@ try {
       },
     })
   })
+  await herramientas()
   await page.getByText('Registro de uso', { exact: true }).click()
   await page
     .getByRole('button', { name: 'Generar declaración', exact: true })
