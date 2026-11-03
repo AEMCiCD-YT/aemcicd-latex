@@ -1,4 +1,5 @@
 import logger from '@overleaf/logger'
+import { parsePartialJson } from 'ai'
 import Settings from '@overleaf/settings'
 import { crearFirmador } from './token-soporte.mjs'
 import { PLANTILLAS, plantilla } from './plantillas.mjs'
@@ -31,6 +32,28 @@ export const VERSION_AVISO = '2026-11'
 const firmadorSoporte = crearFirmador(
   Settings.security?.sessionSecret || undefined
 )
+
+// Las respuestas con cambios llegan como JSON estructurado. Para que el estudiante no espere en
+// blanco, se envía la «explicacion» a medida que se genera (JSON parcial), cada ~300 ms. La
+// respuesta final validada la reemplaza.
+async function adelantarExplicacion(texto, linea, avance) {
+  const ahora = Date.now()
+  if (ahora - avance.ultimo < 300) return
+  avance.ultimo = ahora
+  const { value } = await parsePartialJson(texto)
+  const explicacion =
+    value && typeof value.explicacion === 'string' ? value.explicacion : ''
+  if (
+    explicacion.startsWith(avance.enviado) &&
+    explicacion.length > avance.enviado.length
+  ) {
+    linea({ tipo: 'texto', texto: explicacion.slice(avance.enviado.length) })
+    avance.enviado = explicacion
+  } else if (!explicacion) {
+    // Aún no hay explicación (p. ej., transcribiendo varias páginas): solo una señal de progreso.
+    linea({ tipo: 'progreso', caracteres: texto.length })
+  }
+}
 
 const ESTADOS_HTTP = {
   deshabilitada: 503,
@@ -121,10 +144,13 @@ async function consultar(req, res) {
     const def = definicion(funcion)
     if ((funcion === 'foto_latex') !== req.path.endsWith('/foto'))
       throw new ErrorEntrada('La función no corresponde a esta ruta.')
+    if (entrada?.soloEstimar)
+      throw new ErrorEntrada('Esta entrada solo sirve para estimar el costo.')
     const estadoUsuario = await servicio.estado(userId)
     if (!estadoUsuario.habilitada || !estadoUsuario.activada)
       throw new ErrorEntrada('Activa la IA para consultar.')
     let textoPropuesta = ''
+    const avance = { enviado: '', ultimo: 0 }
     let contextoProyecto
     const r = await servicio.conBloqueo(userId, async () => {
       contextoProyecto = await lectorProyecto.preparar(
@@ -143,9 +169,11 @@ async function consultar(req, res) {
         maximoAceptadoMicro,
         preferir: preferir === 'alternativa' ? 'alternativa' : undefined,
         senal: control.signal,
-        alEscribir: texto => {
-          if (def.propuesta || def.respuesta) textoPropuesta += texto
-          else linea({ tipo: 'texto', texto })
+        alEscribir: async texto => {
+          if (!(def.propuesta || def.respuesta))
+            return linea({ tipo: 'texto', texto })
+          textoPropuesta += texto
+          await adelantarExplicacion(textoPropuesta, linea, avance)
         },
       })
     })
@@ -237,7 +265,9 @@ async function estimar(req, res) {
   if (
     nombre !== 'chat_proyecto' &&
     !definicion(nombre).usaProyecto &&
-    !definicion(nombre).usaContexto
+    !definicion(nombre).usaContexto &&
+    !(nombre === 'foto_latex' && req.body?.entrada?.soloEstimar === true) &&
+    !(nombre === 'agente' && req.body?.entrada?.usarProyecto === true)
   )
     throw new ErrorEntrada('Solo se estima la consulta del proyecto completo.')
   // Dentro del bloqueo: preparar lee PDF, historial o Crossref y no debe correr en paralelo.

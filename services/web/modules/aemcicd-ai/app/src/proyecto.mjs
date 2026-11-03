@@ -7,6 +7,64 @@ import { extraerPdf } from './pdf-proyecto.mjs'
 import { textoFase2 } from './fase2.mjs'
 import { intervaloHistorial } from './historial.mjs'
 
+// Un archivo abierto de hasta este tamaño se envía completo; si es más grande, la zona del cursor.
+export const MAX_ARCHIVO_ABIERTO = 60000
+
+function normalizarRuta(ruta) {
+  if (typeof ruta !== 'string') return null
+  const limpia = ruta.replace(/^\.\//, '').trim()
+  try {
+    return rutaSegura(limpia)
+  } catch {
+    return null
+  }
+}
+
+// Errores del log de la última compilación, tal como los muestra el editor (máximo 10).
+export function normalizarErrores(errores) {
+  if (!Array.isArray(errores)) return []
+  return errores
+    .filter(e => e && typeof e === 'object' && typeof e.mensaje === 'string')
+    .slice(0, 10)
+    .flatMap(e => {
+      return [
+        {
+          nivel:
+            e.nivel === 'warning' || e.nivel === 'advertencia'
+              ? 'advertencia'
+              : 'error',
+          mensaje: e.mensaje.slice(0, 500),
+          archivo: normalizarRuta(e.archivo),
+          linea: Number.isInteger(e.linea) && e.linea > 0 ? e.linea : null,
+          detalle:
+            typeof e.detalle === 'string' ? e.detalle.slice(0, 1500) : '',
+        },
+      ]
+    })
+}
+
+// Últimos turnos de la conversación (no se guardan en el servidor). Alterna estudiante/asistente
+// y empieza por el estudiante, como exigen los API.
+export function normalizarHistorial(historial) {
+  if (!Array.isArray(historial)) return []
+  let total = 0
+  const turnos = []
+  for (const t of historial.slice(-8)) {
+    if (!t || typeof t.texto !== 'string' || !t.texto.trim()) continue
+    const rol = t.rol === 'asistente' ? 'assistant' : 'user'
+    const texto = t.texto.slice(0, 4000)
+    total += texto.length
+    if (turnos.length && turnos.at(-1).role === rol)
+      turnos.at(-1).content += '\n\n' + texto
+    else turnos.push({ role: rol, content: texto })
+  }
+  while (turnos.length && turnos[0].role !== 'user') turnos.shift()
+  while (total > 16000 && turnos.length > 2)
+    total -= turnos.shift().content.length
+  while (turnos.length && turnos[0].role !== 'user') turnos.shift()
+  return turnos
+}
+
 export const NOMBRE_INSTRUCCIONES = 'ia-instrucciones.md'
 export const PLANTILLA_INSTRUCCIONES =
   '# Instrucciones del proyecto\n\nDescribe el tipo de documento, el idioma y las normas de formato que necesitas.\n'
@@ -158,6 +216,10 @@ export function crearLectorProyecto({
         throw new ErrorEntrada('Elige un archivo CSV, TSV o TXT.')
       contexto.datosGrafica = await sesion.leerDatos(entrada.archivoDatos)
     }
+    if (nombre === 'agente') {
+      await contextoAgente(sesion, contexto, entrada, limiteTokens)
+      return contexto
+    }
     if (entrada?.archivo && !def.usaProyecto) {
       const doc = await sesion.leer(entrada.archivo)
       contexto.documentos.push(doc)
@@ -206,7 +268,14 @@ export function crearLectorProyecto({
     }
     if ((nombre === 'reescribir' || def.usaSeleccion) && !contexto.destino)
       throw new ErrorEntrada('Selecciona el texto que quieres reescribir.')
-    if (nombre === 'chat_proyecto' || def.usaProyecto) {
+    if (nombre === 'chat_proyecto' || def.usaProyecto)
+      await cargarProyecto(sesion, contexto, limiteTokens)
+    return contexto
+  }
+
+  // Todos los archivos de texto del proyecto, con el principal primero, o error si no caben.
+  async function cargarProyecto(sesion, contexto, limiteTokens) {
+    {
       contexto.documentos = []
       let tokens = 0
       const docs = [...sesion.documentos.values()].filter(d =>
@@ -231,7 +300,117 @@ export function crearLectorProyecto({
         .map(documentoComoDatos)
         .join('\n\n')
     }
-    return contexto
+  }
+
+  // Agente del documento: lo que ve el estudiante en el editor. El servidor lee el texto; el
+  // navegador solo indica qué archivo está abierto, dónde está el cursor, qué hay seleccionado,
+  // qué errores dio la última compilación y los últimos turnos de la conversación.
+  async function contextoAgente(sesion, contexto, entrada, limiteTokens) {
+    contexto.archivos = [...sesion.documentos.keys()].sort().slice(0, 300)
+    contexto.errores = normalizarErrores(entrada?.errores)
+    contexto.historial = normalizarHistorial(entrada?.historial)
+    contexto.vistas = []
+    const ver = (doc, desdeLinea, hastaLinea) => {
+      const lineas = doc.texto.split('\n')
+      const ya = contexto.vistas.find(v => v.ruta === doc.ruta)
+      if (ya?.completo) return
+      const completo = desdeLinea <= 1 && hastaLinea >= lineas.length
+      const vista = {
+        ruta: doc.ruta,
+        completo,
+        primeraLinea: Math.max(1, desdeLinea),
+        texto: completo
+          ? doc.texto
+          : lineas.slice(Math.max(0, desdeLinea - 1), hastaLinea).join('\n'),
+      }
+      if (completo && ya) contexto.vistas.splice(contexto.vistas.indexOf(ya), 1)
+      contexto.vistas.push(vista)
+      if (!contexto.documentos.some(d => d.ruta === doc.ruta))
+        contexto.documentos.push(doc)
+    }
+    if (entrada?.usarProyecto === true) {
+      await cargarProyecto(sesion, contexto, limiteTokens)
+      for (const doc of contexto.documentos)
+        contexto.vistas.push({
+          ruta: doc.ruta,
+          completo: true,
+          primeraLinea: 1,
+          texto: doc.texto,
+        })
+      contexto.usaProyecto = true
+    }
+    let abierto = null
+    if (entrada?.archivo) {
+      abierto = await sesion.leer(entrada.archivo)
+      contexto.abierto = abierto.ruta
+      const lineas = abierto.texto.split('\n')
+      const cursor =
+        Number.isInteger(entrada.cursor) &&
+        entrada.cursor >= 0 &&
+        entrada.cursor <= abierto.texto.length
+          ? entrada.cursor
+          : null
+      if (abierto.texto.length <= MAX_ARCHIVO_ABIERTO)
+        ver(abierto, 1, lineas.length)
+      else {
+        // Archivo grande: alrededor del cursor (o del inicio).
+        const linea =
+          cursor === null
+            ? 1
+            : abierto.texto.slice(0, cursor).split('\n').length
+        ver(abierto, linea - 150, linea + 150)
+      }
+      if (cursor !== null) {
+        contexto.cursor = {
+          ruta: abierto.ruta,
+          posicion: cursor,
+          linea: abierto.texto.slice(0, cursor).split('\n').length,
+          huella: abierto.huella,
+        }
+      }
+      const { desde, hasta } = entrada
+      if (
+        Number.isInteger(desde) &&
+        Number.isInteger(hasta) &&
+        desde >= 0 &&
+        hasta > desde &&
+        hasta <= abierto.texto.length
+      )
+        contexto.seleccionAgente = {
+          ruta: abierto.ruta,
+          texto: abierto.texto.slice(desde, hasta).slice(0, 20000),
+        }
+    }
+    // Errores en otros archivos (capítulos): unas líneas alrededor de cada uno.
+    for (const e of contexto.errores) {
+      const ruta = e.archivo
+      if (!ruta || !sesion.documentos.has(ruta)) continue
+      const doc = await sesion.leer(ruta)
+      if (contexto.vistas.some(v => v.ruta === ruta && v.completo)) continue
+      if (doc.texto.length <= MAX_ARCHIVO_ABIERTO / 2)
+        ver(doc, 1, doc.texto.split('\n').length)
+      else if (Number.isInteger(e.linea)) ver(doc, e.linea - 25, e.linea + 25)
+    }
+    // El preámbulo, para poder añadir paquetes (\usepackage, \usetikzlibrary).
+    const base =
+      abierto ||
+      (contexto.errores[0]?.archivo &&
+      sesion.documentos.has(contexto.errores[0].archivo)
+        ? await sesion.leer(contexto.errores[0].archivo)
+        : null)
+    if (base) {
+      const pre = await preambulo(sesion, base)
+      if (pre && !contexto.vistas.some(v => v.ruta === pre.ruta && v.completo))
+        ver(await sesion.leer(pre.ruta), 1, pre.texto.split('\n').length)
+    }
+    const tokens = contexto.vistas.reduce(
+      (s, v) => s + estimarTokens(v.texto),
+      0
+    )
+    if (tokens > limiteTokens)
+      throw new ErrorEntrada(
+        `El contexto supera el límite de ${limiteTokens} tokens estimados. Desmarca «Todo el proyecto» o consulta sobre una selección.`
+      )
   }
 
   async function instrucciones(projectId) {

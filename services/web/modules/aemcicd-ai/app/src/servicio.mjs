@@ -133,22 +133,26 @@ export function crearServicio({
       estimarTokens(preparada.sistema) +
       estimarTokens(JSON.stringify(sinImagen)) +
       (preparada.tokensVisuales || 0)
-    return { def, ...preparada, tokensEntrada }
+    // Algunas funciones ajustan la salida a la entrada (p. ej., una foto de varias páginas).
+    const maxSalida = preparada.maxSalida || def.maxSalida
+    // …y otras eligen el nivel de modelo según el contexto (p. ej., el agente con todo el proyecto).
+    const nivel = preparada.nivel || def.nivel
+    return { def, ...preparada, tokensEntrada, maxSalida, nivel }
   }
 
   function estimar({ funcion, entrada, contextoProyecto, preferir }) {
-    const { def, tokensEntrada } = prepararConsulta(
+    const { def, tokensEntrada, maxSalida, nivel } = prepararConsulta(
       funcion,
       entrada,
       contextoProyecto
     )
-    const modelos = candidatos(def.nivel, config, { preferir }).map(c => ({
+    const modelos = candidatos(nivel, config, { preferir }).map(c => ({
       proveedor: c.proveedor,
       modelo: c.modelo,
       maximoMicro: costoMaximo(
         c.modelo,
         tokensEntrada,
-        def.maxSalida,
+        maxSalida,
         config.precios
       ),
     }))
@@ -194,8 +198,17 @@ export function crearServicio({
       mensajes,
       opciones = {},
       tokensEntrada,
+      maxSalida: salidaPermitida,
+      requiereConfirmacion,
+      nivel,
     } = prepararConsulta(funcion, entrada, contextoProyecto)
-    if (funcion === 'chat_proyecto' || def.usaProyecto || def.usaContexto) {
+    // Las consultas grandes (proyecto completo, PDF, varias páginas) exigen haber visto el costo.
+    if (
+      funcion === 'chat_proyecto' ||
+      def.usaProyecto ||
+      def.usaContexto ||
+      requiereConfirmacion
+    ) {
       const estimacion = estimar({
         funcion,
         entrada,
@@ -216,7 +229,7 @@ export function crearServicio({
     const creditoId = idCredito(userId, fecha)
     const motivos = new Set()
 
-    for (const cand of candidatos(def.nivel, config, { preferir })) {
+    for (const cand of candidatos(nivel, config, { preferir })) {
       const { gastadoMicro, reservadoMicro } = await saldos.leer(
         c.creditos,
         creditoId,
@@ -225,7 +238,7 @@ export function crearServicio({
       const disponible =
         config.creditoMensualMicro - gastadoMicro - reservadoMicro
       const maxSalida = Math.min(
-        def.maxSalida,
+        salidaPermitida,
         salidaQueCabe(cand.modelo, tokensEntrada, disponible, config.precios)
       )
       if (maxSalida < def.minSalida) {
@@ -321,7 +334,7 @@ export function crearServicio({
           userId,
           ...(projectId ? { projectId } : {}),
           funcion,
-          nivel: def.nivel,
+          nivel,
           proveedor: cand.proveedor,
           modelo: cand.modelo,
           alternativa: preferir === 'alternativa',
@@ -347,7 +360,7 @@ export function crearServicio({
           userId,
           ...(projectId ? { projectId } : {}),
           funcion,
-          nivel: def.nivel,
+          nivel,
           proveedor: cand.proveedor,
           modelo: cand.modelo,
           alternativa: preferir === 'alternativa',
