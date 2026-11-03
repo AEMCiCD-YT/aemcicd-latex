@@ -426,11 +426,14 @@ test('chat: no llama al modelo hasta aceptar la cota; un proyecto más caro requ
     contextoProyecto: CONTEXTO,
   }
   const e = s.estimar(p)
+  const e2 = e
   assert.ok(e.tokensEntrada > 0 && e.maximoMicro > 0)
   for (const maximoAceptadoMicro of [undefined, e.maximoMicro - 1, -1, 'mucho'])
     await assert.rejects(
       consultar(s, userId, { ...p, maximoAceptadoMicro }),
-      e => e.codigo === 'estimacion'
+      e =>
+        e.codigo === 'estimacion' &&
+        e.estimacion?.maximoMicro === e2.maximoMicro
     )
   assert.equal(await c.eventos.countDocuments(), 0)
   assert.equal((await s.saldo(userId)).gastadoMicro, 0)

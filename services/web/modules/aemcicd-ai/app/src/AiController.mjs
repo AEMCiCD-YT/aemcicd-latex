@@ -241,6 +241,7 @@ async function consultar(req, res) {
         tipo: 'error',
         codigo: err.codigo || 'entrada',
         mensaje: err.message,
+        ...(err.estimacion && { estimacion: err.estimacion }),
       })
     } else {
       // Los errores del SDK o de Overleaf pueden adjuntar el contenido de una petición.

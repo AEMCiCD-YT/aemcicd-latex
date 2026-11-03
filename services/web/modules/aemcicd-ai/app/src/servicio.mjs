@@ -218,11 +218,15 @@ export function crearServicio({
       if (
         !Number.isSafeInteger(maximoAceptadoMicro) ||
         maximoAceptadoMicro < estimacion.maximoMicro
-      )
-        throw new ErrorIA(
+      ) {
+        // Se devuelve la estimación nueva para que el panel la muestre y se vuelva a confirmar.
+        const e = new ErrorIA(
           'estimacion',
-          'Revisa la estimación del proyecto antes de consultar. El contenido o el costo pudieron cambiar.'
+          'El costo cambió desde la estimación (por ejemplo, porque cambió el archivo). Revisa el nuevo antes de consultar.'
         )
+        e.estimacion = estimacion
+        throw e
+      }
     }
 
     const fecha = ahora()
