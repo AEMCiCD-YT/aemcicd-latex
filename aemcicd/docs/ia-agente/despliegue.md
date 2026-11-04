@@ -42,5 +42,5 @@ Respaldo previo a la primera instalación: `backups/2026-11-03T1719Z` (`remoto.s
 
 ## Pendiente
 
-- Casos `agente-*` ejecutados el 4 de noviembre: 7 de 8 correctas ([informe](../../ia-eval/informes/2026-11-04-agente.md)); repetir el de la tabla con la instrucción nueva.
+- Casos `agente-*` ejecutados el 4 de noviembre: 7 de 8 correctas y 8 de 8 tras ajustar la instrucción de tablas en `agente-eac4565c` ([informe](../../ia-eval/informes/2026-11-04-agente.md)).
 - Probar el flujo con estudiantes en un proyecto con capítulos (`\input`) y tablas reales.
