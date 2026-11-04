@@ -184,14 +184,14 @@ agregados sin permitir contenido ni identificadores adicionales. Los términos 1
 informan de Crossref y del texto de PDF. [Pruebas locales](ia-fase-3/verificacion.md) y
 [comprobaciones del despliegue](ia-fase-3/despliegue.md) distinguen lo verificado y lo pendiente.
 
-### Agente del documento (3 de noviembre de 2026)
+### Agente del documento (desplegado el 3 de noviembre de 2026)
 
 Tras las pruebas con usuarios, el chat dejó de ser una conversación aparte del código: ve el
 archivo abierto, el cursor, la selección y los errores de la última compilación, recuerda los
 turnos anteriores y propone cambios aplicables (incluida la inserción en el cursor). Al aplicar
 un cambio se recompila y, si siguen los errores, se ofrece seguir arreglando hasta tres veces.
 El log tiene un botón «Arreglar los errores con IA». El panel se divide en «Conversación» y
-«Herramientas». Detalle técnico en `services/web/modules/aemcicd-ai/README.md`.
+«Herramientas». Detalle técnico en `services/web/modules/aemcicd-ai/README.md`; despliegue en `aemcicd/docs/ia-agente/despliegue.md`.
 
 ### Fuera de alcance
 
