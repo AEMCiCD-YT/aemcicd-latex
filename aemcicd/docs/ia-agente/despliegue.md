@@ -6,16 +6,17 @@ estudiantes (`AEMCICD_AI_ONLY_ADMINS=false`), con $1 de crédito mensual y los t
 
 ## Versiones
 
-| Imagen                           | Origen                                                                  | Digest                                                                    | Estado                                  |
-| -------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------- |
-| `6.3.0-ext-v5.1-agente-32c05de1` | [PR 10](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/10), ACR `cjk` | `sha256:af5f82c0…78be`                                                    | Instalada y sustituida                  |
-| `6.3.0-ext-v5.1-agente-5af185e8` | [PR 11](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/11), ACR `cjm` | `sha256:bf5809d4…cb25`                                                    | Fijada; sustituida antes de comprobarla |
-| `6.3.0-ext-v5.1-agente-669d2381` | [PR 12](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/12), ACR `cjn` | `sha256:87eccfb064ac223282c40344431e17765e417b0d386f73f2c5b9787a20d79a83` | **En producción**                       |
+| Imagen                           | Origen                                                                  | Digest                                                                    | Estado                                    |
+| -------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------- |
+| `6.3.0-ext-v5.1-agente-32c05de1` | [PR 10](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/10), ACR `cjk` | `sha256:af5f82c0…78be`                                                    | Instalada y sustituida                    |
+| `6.3.0-ext-v5.1-agente-5af185e8` | [PR 11](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/11), ACR `cjm` | `sha256:bf5809d4…cb25`                                                    | Fijada; sustituida antes de comprobarla   |
+| `6.3.0-ext-v5.1-agente-669d2381` | [PR 12](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/12), ACR `cjn` | `sha256:87eccfb064ac223282c40344431e17765e417b0d386f73f2c5b9787a20d79a83` | Instalada y sustituida                    |
+| `6.3.0-ext-v5.1-agente-eac4565c` | [PR 13](https://github.com/AEMCiCD-YT/aemcicd-latex/pull/13), ACR `cjp` | `sha256:b7608d552e37dcfab1368574acb36ef47467b7fe01f76fac35ad9fb946e0d4bd` | **En producción** desde el 4 de noviembre |
 
 Una primera construcción etiquetada `agente-11f29294` se hizo desde `ext-ce` antes del merge del
 PR 10 y contiene el código de la fase 3; nunca se fijó en el instalador.
 
-Respaldo previo a la primera instalación: `backups/2026-11-03T1719Z` (`remoto.sh backup`,
+Respaldos previos: `backups/2026-11-03T1719Z` (primera instalación) y `backups/2026-11-04T0247Z` (antes de `agente-eac4565c`) (`remoto.sh backup`,
 «backup terminado»).
 
 ## Comprobaciones en producción
@@ -42,5 +43,5 @@ Respaldo previo a la primera instalación: `backups/2026-11-03T1719Z` (`remoto.s
 
 ## Pendiente
 
-- Casos `agente-*` ejecutados el 4 de noviembre: 7 de 8 correctas ([informe](../../ia-eval/informes/2026-11-04-agente.md)); repetir el de la tabla con la instrucción nueva.
+- Casos `agente-*` ejecutados el 4 de noviembre: 7 de 8 correctas y 8 de 8 tras ajustar la instrucción de tablas en `agente-eac4565c` ([informe](../../ia-eval/informes/2026-11-04-agente.md)).
 - Probar el flujo con estudiantes en un proyecto con capítulos (`\input`) y tablas reales.
