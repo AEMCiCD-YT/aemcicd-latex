@@ -5,6 +5,7 @@ import {
   connectionPromise,
   getCollectionInternal,
 } from '../../../app/src/infrastructure/mongodb.mjs'
+import { aplicarAjustes } from '../app/src/ajustes.mjs'
 import { NOMBRES } from '../app/src/almacen.mjs'
 import { leerConfig } from '../app/src/config.mjs'
 import { resumenMensual } from '../app/src/resumen.mjs'
@@ -25,11 +26,8 @@ const c = Object.fromEntries(
     ])
   )
 )
-console.log(
-  JSON.stringify(
-    await resumenMensual(c, leerConfig(process.env), fecha),
-    null,
-    2
-  )
-)
+// Los mismos topes y crédito que usa el servidor: los de la plataforma si ya llegaron.
+const config = leerConfig(process.env)
+aplicarAjustes(config, await c.ajustes.findOne({ _id: 'plataforma' }))
+console.log(JSON.stringify(await resumenMensual(c, config, fecha), null, 2))
 process.exit(0)
