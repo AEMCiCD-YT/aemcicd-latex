@@ -4,6 +4,7 @@ import { streamText } from 'ai'
 import { getCollectionInternal } from '../../../../app/src/infrastructure/mongodb.mjs'
 import EmailSender from '../../../../app/src/Features/Email/EmailSender.mjs'
 import { NOMBRES, crearIndices } from './almacen.mjs'
+import { aplicarAjustes, leerAjustes } from './ajustes.mjs'
 import { leerConfig } from './config.mjs'
 import { crearFabrica } from './proveedores.mjs'
 import { crearServicio } from './servicio.mjs'
@@ -27,7 +28,7 @@ async function avisarPresupuesto(config, c, proveedor, presupuestoId) {
   const texto =
     `El presupuesto de IA con ${proveedor === 'openai' ? 'OpenAI' : 'Claude'} llegó a su tope en ` +
     `el ciclo ${presupuestoId}. Las consultas pasan al otro proveedor; si ambos se agotan, la IA ` +
-    'se pausa hasta que se renueve alguno. Los topes se cambian en latex-server/personalizacion.'
+    'se pausa hasta que se renueve alguno. Los topes se cambian en la plataforma (Programa LaTeX → Configuración → Asistente de IA).'
   try {
     await EmailSender.promises.sendEmail(
       {
@@ -65,6 +66,21 @@ async function construir() {
   )
   const c = Object.fromEntries(entradas)
   await crearIndices(c)
+  // Crédito y topes de la plataforma: al arrancar y luego cada minuto (el conector los actualiza).
+  const refrescar = async () => {
+    try {
+      if (aplicarAjustes(config, await leerAjustes(c))) {
+        logger.debug(
+          { huella: config.ajustesHuella },
+          'aemcicd-ai: ajustes aplicados'
+        )
+      }
+    } catch (err) {
+      logger.warn({ err }, 'aemcicd-ai: no se pudieron leer los ajustes')
+    }
+  }
+  await refrescar()
+  setInterval(refrescar, 60 * 1000).unref()
   Settings.aemcicdAi = {
     enabled: config.habilitada,
     soloAdmins: config.soloAdmins,

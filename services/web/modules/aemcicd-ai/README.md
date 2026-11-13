@@ -254,6 +254,11 @@ aplicación; se informa el costo real de la consulta ya realizada. No se conserv
 
 En el servidor, las claves vienen del Key Vault y el resto de `latex-server/personalizacion/variables.env`.
 
+El crédito por estudiante, los dos topes y los días de ciclo los fija la plataforma (Programa LaTeX →
+Configuración → Asistente de IA). El conector `latex-sync` los guarda con
+`node modules/aemcicd-ai/scripts/ajustes.mjs '<json>'` en `aemcicdAiAjustes` y el módulo los relee
+cada minuto, sin reiniciar. Las variables de esta tabla solo rigen mientras no lleguen.
+
 La imagen del fork activa `ENABLE_PANDOC_CONVERSIONS=true` e instala Pandoc y ZIP para la conversión nativa de Word. Sobrescribir esa variable con `false` desactiva esas conversiones y sus menús; no desactiva el asistente de IA.
 
 ## Rutas
@@ -285,8 +290,8 @@ Rutas adicionales de fase 2:
 
 ## Datos en Mongo
 
-`aemcicdAiUsuarios`, `aemcicdAiCreditos`, `aemcicdAiPresupuestos`, `aemcicdAiEventos` y
-`aemcicdAiRegistro`. Ninguna guarda el texto de documentos ni de preguntas. El registro de un
+`aemcicdAiUsuarios`, `aemcicdAiCreditos`, `aemcicdAiPresupuestos`, `aemcicdAiEventos`,
+`aemcicdAiRegistro` y `aemcicdAiAjustes` (un solo documento con crédito, topes y ciclos). Ninguna guarda el texto de documentos ni de preguntas. El registro de un
 proyecto se borra cuando el proyecto se elimina definitivamente (hook `projectExpired`).
 
 Resumen agregado del mes: `node modules/aemcicd-ai/scripts/resumen.mjs [AAAA-MM-DD]`, o desde

@@ -6,6 +6,7 @@ export const NOMBRES = {
   presupuestos: 'aemcicdAiPresupuestos', // presupuesto por proveedor y ciclo
   eventos: 'aemcicdAiEventos', // medición: función, modelo, tokens, costo, 👍/👎
   registro: 'aemcicdAiRegistro', // registro de uso de IA de cada proyecto
+  ajustes: 'aemcicdAiAjustes', // crédito, topes y ciclos que fija la plataforma (ajustes.mjs)
 }
 
 export function colecciones(db) {
